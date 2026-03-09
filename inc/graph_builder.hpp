@@ -56,6 +56,7 @@ public:
 };
 
 class IEdge {
+public:
     virtual Endpoint left() const noexcept = 0;
     virtual Endpoint right() const noexcept = 0;
 
@@ -66,10 +67,9 @@ class IEdge {
 };
 
 class ICluster {
+public:
     virtual DotId id() const = 0;
     virtual std::string label() const = 0;
-
-    
 
     virtual void add_node(INode& node) = 0;
 
@@ -110,7 +110,7 @@ public:
 
 
     template <typename ClusterT, typename ... ArgT>   
-    ClusterT& create_cluster(ArgT&& ... arg) {
+    ClusterT& create_cluster(ArgT&& ... args) {
         static_assert(std::is_base_of<ICluster, ClusterT>::value,
                       "ClusterT must derive from ICluster");
         
@@ -154,7 +154,7 @@ public:
         auto ptr = std::make_unique<NodeT>(id, std::forward<ArgT>(args)...);
         NodeT& ref = *ptr;
         nodes_.emplace(id, std::move(ptr));
-        clusters_[cid]->add_node(id);
+        clusters_[cid]->add_node(ref);
         return ref;
     }
     
