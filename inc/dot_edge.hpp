@@ -34,14 +34,14 @@ static inline const struct EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES =
 class Edge : public IEdge { 
 protected:
     Endpoint left_, right_;
+    std::string_view label_;
     EdgeProperties properties_;
 
 public:
-    Edge(Endpoint left, Endpoint right) : 
-        left_(left), right_(right) {}
+    Edge(Endpoint left, Endpoint right, std::string_view label="") : 
+        left_(left), right_(right), label_(label) {}
 
-    Endpoint left() const override { return left_; }
-    Endpoint right() const override { return right_; }
+    std::string_view label() const override { return label_; }
 
     const EdgeProperties& properties() const override {
         return properties_;
@@ -53,13 +53,15 @@ public:
 };
 
 class DataEdge final : public Edge {
-    DataEdge(Endpoint left, Endpoint right):
-        Edge(left, right) {properties_ = DEFAULT_DATAEDGE_PROPERTIES; }
+public:
+    DataEdge(Endpoint left, Endpoint right, std::string_view label=""):
+        Edge(left, right, label) {properties_ = DEFAULT_DATAEDGE_PROPERTIES; }
 };
 
 class FlowEdge final : public Edge {
-    FlowEdge(Endpoint left, Endpoint right):
-        Edge(left, right) {properties_ = DEFAULT_FLOWEDGE_PROPERTIES; }
+public:
+    FlowEdge(Endpoint left, Endpoint right, std::string_view label=""):
+        Edge(left, right, label) {properties_ = DEFAULT_FLOWEDGE_PROPERTIES; }
 };
 
 } // namespace dot

@@ -8,50 +8,39 @@
 using namespace llvm;
 
 struct MyModPass : public PassInfoMixin<MyModPass> {
-    PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM) {
+    PreservedAnalyses run(Module& M, ModuleAnalysisManager& AM) {
         dot::DotBuilder dot_builder;
 
-        for (auto &F : M) {
-            // dot_builder.create_cluster();
-            for (auto &B : F) {
-                uint64_t prev_instr_id = 0;
-                // dot_builder.create
-                for (auto &I : B) {
-                    // dot_builder.create_node
+        for (auto& F : M) {
+            dot::FCluster* Fcluster = dot_builder.create_cluster<dot::FCluster>((uint64_t) &F, F.getName());
+            for (auto& B : F) {
+                dot::BBCluster* BBcluster = 
+                    dot_builder.create_cluster_with_parent<dot::BBCluster>((uint64_t) &B, *Fcluster, B.getName());
 
-                uint64_t cur_instr_id = (uint64_t) &I;
-                if (prev_instr_id) {
-                    outs() << "n" << prev_instr_id << " -> " << "n" << cur_instr_id << " ";
-                    outs() << "[";
-                    outs() << "color=\"" << "red" << "\" ";
-                    outs() << "penwidth=\"" << "2" << "\" ";
-                    outs() << "style=\"" << "solid" << "\" ";
-                    outs() << "arrowhead=\"" << "normal" << "\"";
-                    outs() << "];\n";
-                }
-                prev_instr_id = cur_instr_id; 
+                dot::InstrNode* prev_node = nullptr;
+                for (auto& I : B) {
+                    dot::InstrNode* node = 
+                        dot_builder.create_node_in_cluster<dot::InstrNode>((uint64_t) &I, *BBcluster, I.getOpcodeName());
                     
-                for (auto &U : I.uses()) {
-                    Instruction *user = dyn_cast<Instruction> (U.getUser());
-                    if (user) {
-                    uint64_t user_instr_id = (uint64_t) user;
-                    outs() << "n" << cur_instr_id << " -> " << "n" << user_instr_id << " ";
-                    outs() << "[";
-                    outs() << "color=\"" << "blue" << "\" ";
-                    outs() << "penwidth=\"" << "2" << "\" ";
-                    outs() << "style=\"" << "solid" << "\" ";
-                    outs() << "arrowhead=\"" << "normal" << "\"";
-                    outs() << "];\n";
+                    if (prev_node) {
+                        dot_builder.create_edge<dot::FlowEdge>(*node, *prev_node);
                     }
-                    
+                   
+                    for (auto &U : I.uses()) {
+                        Instruction *user = dyn_cast<Instruction> (U.getUser());
+                        if (user) {
+                            dot::InstrNode* user_node = 
+                            dot_builder.create_node_in_cluster<dot::InstrNode>((uint64_t) user, *BBcluster, user->getOpcodeName());
+                            dot_builder.create_edge<dot::FlowEdge>(*node, *user_node, "");
+                        }
+                    }
+                    prev_node = node;
                 }
             }
         }
+        return PreservedAnalyses::all();
     }
-    outs() << "}\n";
-
-    return PreservedAnalyses::all();
-  };
+    
 };
 
 PassPluginLibraryInfo getPassPluginInfo() {

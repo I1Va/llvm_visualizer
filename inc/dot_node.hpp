@@ -25,7 +25,7 @@ static inline const NodeProperties DEFAULT_INSTRNODE_PROPERTIES =
 class Node : public INode {
 protected:
     DotId id_;
-    std::string label_;
+    std::string_view label_;
 
     NodeProperties properties_;
 
@@ -33,13 +33,14 @@ public:
     Node(DotId id, const std::string& label):
         id_(id), label_(label) {}
     DotId id() const override { return id_; }
-    std::string label() const override { return label_;}
+    std::string_view label() const override { return label_;}
 
     const NodeProperties& properties() const override { return properties_; }
     NodeProperties& properties() override { return properties_; }
 };
 
 class InstrNode final : public Node {
+public:
     InstrNode(DotId id, const std::string& label): Node(id, label) {
         properties_ = DEFAULT_INSTRNODE_PROPERTIES;
     }

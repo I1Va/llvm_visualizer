@@ -27,27 +27,31 @@ static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES =
     .fontsize = 20,
 };
 
+static inline const ClusterProperties DEFAULT_F_CLUSTER_PROPERTIES = 
+{
+    .color = "green",
+    .fillcolor = "gray",
+    .style = "filled",
+    .penwidth = 2,
+    .fontcolor = "red",
+    .fontsize = 20,
+};
+
 class Cluster : public ICluster {
 protected:
     ClusterProperties properties_;
 
     DotId id_;
-    std::string label_;
+    std::string_view label_;
     
     ICluster *parent_=nullptr;
     std::vector<INode *> children_;
 public:
-    Cluster(DotId cluster_id, const std::string &label):
+    Cluster(DotId cluster_id, std::string_view label):
         id_(cluster_id), label_(label) {}
     
     DotId id() const override { return id_; }
-    std::string label() const override { return label_; }
-
-    void add_child(INode* node) override {
-        assert(node);
-    
-        children_.push_back(node);
-    }
+    std::string_view label() const override { return label_; }
 
     const ClusterProperties& properties() const override {
         return properties_;
@@ -59,6 +63,12 @@ public:
 
     const ICluster* get_parent() const override {
         return parent_;
+    }
+
+    void add_child(INode* node) override {
+        assert(node);
+    
+        children_.push_back(node);
     }
 
     ICluster* get_parent() override {
@@ -75,10 +85,20 @@ public:
 };
 
 class BBCluster final : public Cluster {
-    BBCluster(DotId cluster_id, const std::string &label) : 
+public:
+    BBCluster(DotId cluster_id, std::string_view label) : 
         Cluster(cluster_id, label) {
             properties_ = DEFAULT_BB_CLUSTER_PROPERTIES;
         }
 };
+
+class FCluster final : public Cluster {
+public:
+    FCluster(DotId cluster_id, std::string_view label) : 
+        Cluster(cluster_id, label) {
+            properties_ = DEFAULT_F_CLUSTER_PROPERTIES;
+        }
+};
+
 
 } // namespace dot 
