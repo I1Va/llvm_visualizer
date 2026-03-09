@@ -3,89 +3,50 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/Casting.h"
 
-#include "graph_builder.hpp"
+#include "dot_builder.hpp"
 
 using namespace llvm;
 
 struct MyModPass : public PassInfoMixin<MyModPass> {
-  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM) {
-    outs() << "digraph G {\n";
-    outs() << "rankdir=TD;";
-    outs() << "splines=polyline\n";
-    outs() << "nodesep=1.0;\n";
-    outs() << "ranksep=1.5;\n";
+    PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM) {
+        dot::DotBuilder dot_builder;
 
-    for (auto &F : M) {
-      outs() << "subgraph cluster_" << (uint64_t) &F << "{ ";
-      outs() << "label=\"" << F.getName() << "\"\n";
-      outs() << "color=\"" << "#af09fcff" << "\"\n";
-      outs() << "fillcolor=\"" << "#F5F5F5" << "\"\n"; 
-      outs() << "style=\"" << "filled" << "\"\n"; 
-      outs() << "style=\"" << "filled" << "\"\n"; 
-      outs() << "penwidth=\"" << "3" << "\"\n"; 
-      outs() << "fontcolor=\"" << "red" << "\"\n"; 
-      outs() << "fontsize=\"" << "20" << "\"\n"; 
+        for (auto &F : M) {
+            // dot_builder.create_cluster();
+            for (auto &B : F) {
+                uint64_t prev_instr_id = 0;
+                // dot_builder.create
+                for (auto &I : B) {
+                    // dot_builder.create_node
 
-      for (auto &B : F) {
-        
-        outs() << "subgraph cluster_" << (uint64_t) &B << "{ ";
-        outs() << "label=\"" << B.getName() << "\"\n";
-        outs() << "color=\"" << "blue" << "\"\n";
-        outs() << "fillcolor=\"" << "#F5F5F5" << "\"\n"; 
-        outs() << "style=\"" << "filled" << "\"\n"; 
-        outs() << "style=\"" << "filled" << "\"\n"; 
-        outs() << "penwidth=\"" << "2" << "\"\n"; 
-        outs() << "fontcolor=\"" << "red" << "\"\n"; 
-        outs() << "fontsize=\"" << "20" << "\"\n"; 
-  
-        for (auto &I : B) {
-          outs() << "n" << (uint64_t) &I;
-          outs() << "[";
-          outs() << "label=\""      << I.getOpcodeName() << "\" ";
-          outs() << "shape=\""      << "rect" << "\" ";
-          outs() << "style=\""      << "filled" << "\" ";
-          outs() << "fillcolor=\""  << "#FFD0D0" << "\"";
-          outs() << "];\n";
-        }
-
-        outs() << "}\n";
-      }
-      outs() << "}\n";
-    }
-
-    for (auto &F : M) {
-      for (auto &B : F) {
-        uint64_t prev_instr_id = 0;
-        for (auto &I : B) {
-          uint64_t cur_instr_id = (uint64_t) &I;
-          if (prev_instr_id) {
-            outs() << "n" << prev_instr_id << " -> " << "n" << cur_instr_id << " ";
-            outs() << "[";
-            outs() << "color=\"" << "red" << "\" ";
-            outs() << "penwidth=\"" << "2" << "\" ";
-            outs() << "style=\"" << "solid" << "\" ";
-            outs() << "arrowhead=\"" << "normal" << "\"";
-            outs() << "];\n";
-          }
-          prev_instr_id = cur_instr_id; 
-            
-
-          for (auto &U : I.uses()) {
-            Instruction *user = dyn_cast<Instruction> (U.getUser());
-            if (user) {
-              uint64_t user_instr_id = (uint64_t) user;
-              outs() << "n" << cur_instr_id << " -> " << "n" << user_instr_id << " ";
-              outs() << "[";
-              outs() << "color=\"" << "blue" << "\" ";
-              outs() << "penwidth=\"" << "2" << "\" ";
-              outs() << "style=\"" << "solid" << "\" ";
-              outs() << "arrowhead=\"" << "normal" << "\"";
-              outs() << "];\n";
+                uint64_t cur_instr_id = (uint64_t) &I;
+                if (prev_instr_id) {
+                    outs() << "n" << prev_instr_id << " -> " << "n" << cur_instr_id << " ";
+                    outs() << "[";
+                    outs() << "color=\"" << "red" << "\" ";
+                    outs() << "penwidth=\"" << "2" << "\" ";
+                    outs() << "style=\"" << "solid" << "\" ";
+                    outs() << "arrowhead=\"" << "normal" << "\"";
+                    outs() << "];\n";
+                }
+                prev_instr_id = cur_instr_id; 
+                    
+                for (auto &U : I.uses()) {
+                    Instruction *user = dyn_cast<Instruction> (U.getUser());
+                    if (user) {
+                    uint64_t user_instr_id = (uint64_t) user;
+                    outs() << "n" << cur_instr_id << " -> " << "n" << user_instr_id << " ";
+                    outs() << "[";
+                    outs() << "color=\"" << "blue" << "\" ";
+                    outs() << "penwidth=\"" << "2" << "\" ";
+                    outs() << "style=\"" << "solid" << "\" ";
+                    outs() << "arrowhead=\"" << "normal" << "\"";
+                    outs() << "];\n";
+                    }
+                    
+                }
             }
-            
-          }
         }
-      }
     }
     outs() << "}\n";
 

@@ -1,25 +1,11 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <memory>
-#include <unordered_map>
+#include "dot_interface.hpp"
+#include "dot_node.hpp"
+#include "dot_edge.hpp"
 
 namespace dot
 {
-
-using DotId = uint64_t;
-inline constexpr DotId INVALID_ID = 0;
-
-struct ClusterProperties {
-    std::string color = "red";
-    std::string fillcolor = "gray";
-    std::string style = "filled";
-    int penwidth = 2; 
-    std::string fontcolor = "red";
-    int fontsize = 20;
-};
 
 struct GraphProperties {
     std::string_view name = "G";
@@ -27,59 +13,6 @@ struct GraphProperties {
     std::string_view splines = "polyline"; 
     double nodesep = 1.0; 
     double ranksep = 1.5;
-};
-
-struct NodeProperties {
-
-};
-
-struct EdgeProperties {
-
-};
-
-struct Endpoint {
-    enum class Kind { Node, Cluster } kind;
-    DotId id;
-    static Endpoint node(DotId id_) { return Endpoint{Kind::Node, id_}; }
-    static Endpoint cluster(DotId id_) { return Endpoint{Kind::Cluster, id_}; }
-};
-
-class INode {
-public:
-    virtual DotId id() const = 0;
-    virtual std::string label() const = 0;
-
-    virtual const NodeProperties& properties() const = 0;
-    virtual NodeProperties& properties() = 0;
-    
-    virtual ~INode() = default;
-};
-
-class IEdge {
-public:
-    virtual Endpoint left() const noexcept = 0;
-    virtual Endpoint right() const noexcept = 0;
-
-    virtual const EdgeProperties& properties() const = 0;
-    virtual EdgeProperties& properties() = 0;
-
-    virtual ~IEdge() = default;
-};
-
-class ICluster {
-public:
-    virtual DotId id() const = 0;
-    virtual std::string label() const = 0;
-
-    virtual void add_node(INode& node) = 0;
-
-    virtual const ClusterProperties& properties() const = 0;
-    virtual ClusterProperties& properties() = 0;
-
-    virtual const ICluster &get_parent() const = 0;
-    virtual ICluster &get_parent() = 0;
-    virtual void set_parent() = 0;
-    virtual const std::vector<INode*>& nodes() const = 0;
 };
 
 class DotBuilder {
@@ -154,7 +87,7 @@ public:
         auto ptr = std::make_unique<NodeT>(id, std::forward<ArgT>(args)...);
         NodeT& ref = *ptr;
         nodes_.emplace(id, std::move(ptr));
-        clusters_[cid]->add_node(ref);
+        clusters_[cid]->add_child(ptr);
         return ref;
     }
     
@@ -183,5 +116,6 @@ public:
                                        std::forward<ArgT>(args)...);
     }
 };
-    
+
 } // namespace dot
+
