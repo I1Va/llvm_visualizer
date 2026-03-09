@@ -50,6 +50,21 @@ public:
     EdgeProperties& properties() override {
         return properties_;
     }
+
+    void print(std::ostream &stream, const size_t indent) const override {
+        const std::string indent_string(indent, ' ');
+        
+        // std::string left_name = left_.get_string_identifier();
+        // std::string right_name = right_.get_string_identifier();
+
+        // stream << indent_string << left_name << " -> n" << dst_id_;
+        // stream << "[label=\"" << get_kind_label(kind_) << "\"";
+        // stream << "color="    << color;
+        // stream << "penwidth=" << penwidth;
+        // stream << "style="    << style;
+        // stream << "arrowhead=normal";
+        // stream << "];\n";
+    }
 };
 
 class DataEdge final : public Edge {

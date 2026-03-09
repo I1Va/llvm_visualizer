@@ -23,6 +23,15 @@ struct Endpoint {
     DotId id;
     static Endpoint node(DotId id_) { return Endpoint{Kind::Node, id_}; }
     static Endpoint cluster(DotId id_) { return Endpoint{Kind::Cluster, id_}; }
+
+    std::string get_string_identifier() const {
+        switch (kind) {
+            case Kind::Cluster: return "cluster_" + std::to_string(id); break;
+            case Kind::Node: return "n" + std::to_string(id); break;
+            default: throw std::runtime_error("unknown Endpoint kind");
+        }
+        return "";
+    }
 };
 
 class INode {
@@ -31,7 +40,9 @@ public:
     virtual std::string_view label() const = 0;
     virtual const NodeProperties& properties() const = 0;
     virtual NodeProperties& properties() = 0;
-    
+
+    virtual void print(std::ostream &stream, const size_t indent) const = 0;
+
     virtual ~INode() = default;
 };
 
@@ -40,6 +51,8 @@ public:
     virtual std::string_view label() const = 0;
     virtual const EdgeProperties& properties() const = 0;
     virtual EdgeProperties& properties() = 0;
+
+    virtual void print(std::ostream &stream, const size_t indent) const = 0;
 
     virtual ~IEdge() = default;
 };
@@ -50,13 +63,17 @@ public:
     virtual std::string_view label() const = 0;
     virtual const ClusterProperties& properties() const = 0;
     virtual ClusterProperties& properties() = 0;
-    virtual const ICluster* get_parent() const = 0;
-    virtual ICluster* get_parent() = 0;
+    virtual const ICluster* parent() const = 0;
+    virtual ICluster* parent() = 0;
     virtual const std::vector<INode*>& children() const = 0;
 
     virtual void add_child(INode* node) = 0;
     virtual void set_parent(ICluster *parent) = 0;
-    
+
+    virtual void print_open(std::ostream &stream, const size_t indent) const = 0;
+    virtual void print_close(std::ostream &stream, const size_t indent) const = 0;
+    virtual std::string get_cluster_name() const = 0;
+
     virtual ~ICluster() = default;
 };
 

@@ -2,6 +2,8 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 
 #include "dot_builder.hpp"
 
@@ -38,9 +40,25 @@ struct MyModPass : public PassInfoMixin<MyModPass> {
                 }
             }
         }
+
+        std::string result;
+        {
+            std::ostringstream sstream;
+
+            dot_builder.serialize_dot(sstream);
+            result = sstream.str();
+        }
+    
+        std::error_code EC;
+        raw_fd_ostream dot_file("graph.dot", EC, sys::fs::OF_Text);
+        if (EC) {
+            errs() << "Error opening file: " << EC.message() << "\n";
+            return PreservedAnalyses::all();
+        }
+        dot_file << result;
+
         return PreservedAnalyses::all();
     }
-    
 };
 
 PassPluginLibraryInfo getPassPluginInfo() {

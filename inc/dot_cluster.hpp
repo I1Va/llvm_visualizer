@@ -7,6 +7,7 @@ namespace dot
 {
 
 struct ClusterProperties {
+    std::string cluster_suffix = "";
     std::string color = "red";
     std::string fillcolor = "gray";
     std::string style = "filled";
@@ -19,6 +20,7 @@ struct ClusterProperties {
 
 static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES = 
 {
+    .cluster_suffix = "BasicBlock",
     .color = "red",
     .fillcolor = "gray",
     .style = "filled",
@@ -29,6 +31,7 @@ static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES =
 
 static inline const ClusterProperties DEFAULT_F_CLUSTER_PROPERTIES = 
 {
+    .cluster_suffix = "Function",
     .color = "green",
     .fillcolor = "gray",
     .style = "filled",
@@ -61,7 +64,7 @@ public:
         return properties_;
     }
 
-    const ICluster* get_parent() const override {
+    const ICluster* parent() const override {
         return parent_;
     }
 
@@ -71,7 +74,7 @@ public:
         children_.push_back(node);
     }
 
-    ICluster* get_parent() override {
+    ICluster* parent() override {
         return parent_;
     }
 
@@ -82,6 +85,33 @@ public:
     const std::vector<INode*>& children() const override {
         return children_;
     }
+
+    std::string get_cluster_name() const override {
+        return "cluster_" + std::to_string(id_);
+    }
+
+    void print_open(std::ostream &stream, const size_t indent) const override {
+        const std::string indent_string(indent, ' ');
+        stream << indent_string << "subgraph "      << get_cluster_name()    << " {" << "// " << properties_.cluster_suffix << "\n";
+        stream << indent_string << "  label =\""    << label_                << "\"\n";
+        stream << indent_string << "  color =\""    << properties_.color     << "\"\n"; 
+        stream << indent_string << "  style =\""    << properties_.style     << "\"\n";
+        stream << indent_string << "  penwidth =\"" << properties_.penwidth  << "\"\n";
+        stream << indent_string << "  fontcolor=\"" << properties_.fontcolor << "\"\n";     
+        stream << indent_string << "  fontsize=\""  << properties_.fontsize  << "\"\n";
+        
+        for (const INode *child : children_) {
+            child->print(stream, indent);
+        }
+    }
+
+    void print_close(std::ostream &stream, const size_t indent) const override {
+        const std::string indent_string(indent, ' ');
+        stream << indent_string << "}\n";
+    }
+
+    
+
 };
 
 class BBCluster final : public Cluster {
@@ -99,6 +129,10 @@ public:
             properties_ = DEFAULT_F_CLUSTER_PROPERTIES;
         }
 };
+
+
+    
+
 
 
 } // namespace dot 

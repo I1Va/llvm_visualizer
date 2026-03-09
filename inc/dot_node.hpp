@@ -37,6 +37,16 @@ public:
 
     const NodeProperties& properties() const override { return properties_; }
     NodeProperties& properties() override { return properties_; }
+   
+    void print(std::ostream &stream, const size_t indent) const override {
+        const std::string indent_string(indent, ' ');
+        stream << indent_string << "n" << id_;
+        stream << " [";
+        stream << "label=\""        << label_ << "\" ";
+        stream << "shape=\""        << properties_.shape << "\" "; 
+        stream << "fillcolor=\""    << properties_.fillcolor << "\" ";
+        stream << "];\n";
+    }
 };
 
 class InstrNode final : public Node {

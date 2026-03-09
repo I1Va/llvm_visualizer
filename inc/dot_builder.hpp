@@ -1,10 +1,13 @@
 #pragma once
 
+#include <sstream>
+#include <fstream>
+
 #include "dot_interface.hpp"
 #include "dot_node.hpp"
 #include "dot_edge.hpp"
 #include "dot_cluster.hpp"
-#include <iostream>
+
 namespace dot
 {
 
@@ -34,6 +37,43 @@ private:
         edges_.push_back(std::move(edge));
         
         return edge_ptr;
+    }
+
+    void print_cluster_recursive (
+        std::ostream &stream,
+        const std::unordered_map<DotId, std::vector<DotId>>& cluster_graph,
+        const DotId cluster_id,
+        const size_t indent
+    ) const {
+        const std::string indent_string(indent, ' ');
+        clusters_.at(cluster_id)->print_open(stream, indent);
+
+        if (cluster_graph.find(cluster_id) != cluster_graph.end()) {
+            for (DotId child_id : cluster_graph.at(cluster_id)) {
+                clusters_.at(child_id)->print_open(stream, indent + 2);
+                print_cluster_recursive(stream, cluster_graph, child_id, indent + 4);
+                clusters_.at(child_id)->print_close(stream, indent + 2);
+            }
+        }
+        clusters_.at(cluster_id)->print_close(stream, indent);
+    }
+
+    void print_clusters(std::ostream &stream) const {
+        std::unordered_map<DotId, std::vector<DotId>> clusters_graph(clusters_.size());
+
+        for (auto &[cluster_id, cluster] : clusters_) {
+            ICluster* parent = cluster->parent();
+            if (parent) {
+                clusters_graph[parent->id()].push_back(cluster_id);
+            }
+        }
+        
+        const size_t start_indent = 2; 
+        for (auto &[cluster_id, cluster] : clusters_) {
+            if (cluster->parent() == nullptr) {
+                print_cluster_recursive(stream, clusters_graph, cluster_id, start_indent);
+            }
+        }
     }
 
 public:
@@ -123,6 +163,22 @@ public:
         return create_edge_impl<EdgeT>(Endpoint::cluster(left.id()),
                                        Endpoint::cluster(right.id()),
                                        std::forward<ArgT>(args)...);
+    }
+
+
+    void serialize_dot(std::ostream &stream) const {
+        stream << "digraph "   << properties.name    << " {\n";
+        stream << "  rankdir=" << properties.rankdir << "\n";
+        stream << "  splines=" << properties.splines << "\n";  
+        stream << "  nodesep=" << properties.nodesep << "\n";       
+        stream << "  ranksep=" << properties.ranksep << "\n";      
+        
+        print_clusters(stream);
+
+        const size_t indent = 2;
+        for (auto &edge : edges_) edge->print(stream, indent);
+
+        stream << "}\n";
     }
 };
 
