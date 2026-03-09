@@ -38,8 +38,8 @@ public:
 
 class IEdge {
 public:
-    virtual Endpoint left() const noexcept = 0;
-    virtual Endpoint right() const noexcept = 0;
+    virtual Endpoint left() const = 0;
+    virtual Endpoint right() const = 0;
 
     virtual const EdgeProperties& properties() const = 0;
     virtual EdgeProperties& properties() = 0;
@@ -49,7 +49,6 @@ public:
 
 class ICluster {
 public:
-
     virtual DotId id() const = 0;
     virtual std::string label() const = 0;
 

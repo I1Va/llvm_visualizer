@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include "graph_builder.hpp"
+#include "dot_interface.hpp"
 
 namespace dot 
 {
@@ -13,6 +13,8 @@ struct ClusterProperties {
     int penwidth = 2; 
     std::string fontcolor = "red";
     int fontsize = 20;
+
+    ClusterProperties() = default;
 };
 
 static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES = 
@@ -25,17 +27,17 @@ static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES =
     .fontsize = 20,
 };
 
-class BBCluster final : public ICluster {
-    ClusterProperties properties_=DEFAULT_BB_CLUSTER_PROPERTIES;
+class Cluster : public ICluster {
+protected:
+    ClusterProperties properties_;
 
     DotId id_;
     std::string label_;
     
     ICluster *parent_=nullptr;
     std::vector<INode *> children_;
-
 public:
-    BBCluster(DotId cluster_id, const std::string &label):
+    Cluster(DotId cluster_id, const std::string &label):
         id_(cluster_id), label_(label) {}
     
     DotId id() const override { return id_; }
@@ -72,4 +74,11 @@ public:
     }
 };
 
-}
+class BBCluster final : public Cluster {
+    BBCluster(DotId cluster_id, const std::string &label) : 
+        Cluster(cluster_id, label) {
+            properties_ = DEFAULT_BB_CLUSTER_PROPERTIES;
+        }
+};
+
+} // namespace dot 
