@@ -14,11 +14,14 @@ namespace dot
 {
 
 struct GraphProperties {
-    std::string name = "G";
-    std::string rankdir = "TD";
-    std::string splines = "true"; 
-    double nodesep = 0.25; 
-    double ranksep = 0.5;
+    std::string name = "LLVMGraph";    
+    std::string rankdir = "TB";        
+    std::string splines = "true";      
+    double nodesep = 0.8;              
+    double ranksep = 1.2;              
+    std::string bgcolor = "#f8f9fa";   
+    std::string fontname = "Helvetica"; 
+    int fontsize = 14;                 
 };
 
 class DotBuilder {
@@ -189,11 +192,14 @@ public:
     }
 
     void serialize_dot(std::ostream &stream) const {
-        stream << "digraph "   << properties.name    << " {\n";
-        stream << "  rankdir=" << properties.rankdir << "\n";
-        stream << "  splines=" << properties.splines << "\n";  
-        stream << "  nodesep=" << properties.nodesep << "\n";       
-        stream << "  ranksep=" << properties.ranksep << "\n";      
+        stream << "digraph "      << properties.name    << " {\n";
+        stream << "  rankdir=\""  << properties.rankdir  << "\"\n";
+        stream << "  splines=\""  << properties.splines  << "\"\n";  
+        stream << "  nodesep=\""  << properties.nodesep  << "\"\n";       
+        stream << "  ranksep=\""  << properties.ranksep  << "\"\n";   
+        stream << "  bgcolor=\""  << properties.bgcolor  << "\"\n";      
+        stream << "  fontname=\"" << properties.fontname << "\"\n";   
+        stream << "  fontsize=\"" << properties.fontsize << "\"\n";   
         
         print_clusters(stream);
 
