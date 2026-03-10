@@ -8,15 +8,17 @@
 #include "dot_edge.hpp"
 #include "dot_cluster.hpp"
 
+#include <iostream>
+
 namespace dot
 {
 
 struct GraphProperties {
     std::string name = "G";
     std::string rankdir = "TD";
-    std::string splines = "polyline"; 
-    double nodesep = 1.0; 
-    double ranksep = 1.5;
+    std::string splines = "true"; 
+    double nodesep = 0.25; 
+    double ranksep = 0.5;
 };
 
 class DotBuilder {
@@ -50,9 +52,7 @@ private:
 
         if (cluster_graph.find(cluster_id) != cluster_graph.end()) {
             for (DotId child_id : cluster_graph.at(cluster_id)) {
-                clusters_.at(child_id)->print_open(stream, indent + 2);
-                print_cluster_recursive(stream, cluster_graph, child_id, indent + 4);
-                clusters_.at(child_id)->print_close(stream, indent + 2);
+                print_cluster_recursive(stream, cluster_graph, child_id, indent + 2);
             }
         }
         clusters_.at(cluster_id)->print_close(stream, indent);
@@ -65,6 +65,7 @@ private:
             ICluster* parent = cluster->parent();
             if (parent) {
                 clusters_graph[parent->id()].push_back(cluster_id);
+                
             }
         }
         
@@ -134,9 +135,9 @@ public:
             auto node = std::make_unique<NodeT>(id, std::forward<ArgT>(args)...);
             node_ptr = node.get();
             nodes_.emplace(id, std::move(node));
+            clusters_[cid]->add_child(node_ptr);
         }
-
-        clusters_[cid]->add_child(node_ptr);
+        
         return node_ptr;
     }
     
@@ -165,6 +166,27 @@ public:
                                        std::forward<ArgT>(args)...);
     }
 
+    ICluster *get_cluster_by_id(const DotId id) const {
+        if (clusters_.find(id) == clusters_.end()) {
+            return nullptr;
+        }
+        return clusters_.find(id)->second.get();
+    }
+
+    INode *get_node_by_id(const DotId id) const {
+        if (nodes_.find(id) == nodes_.end()) {
+            return nullptr;
+        }
+        return nodes_.find(id)->second.get();
+    }
+
+    bool node_id_exist(const DotId id) const {
+        return nodes_.find(id) != nodes_.end();
+    }
+
+    bool cluster_id_exist(const DotId id) const {
+        return clusters_.find(id) != clusters_.end();
+    }
 
     void serialize_dot(std::ostream &stream) const {
         stream << "digraph "   << properties.name    << " {\n";
@@ -176,7 +198,8 @@ public:
         print_clusters(stream);
 
         const size_t indent = 2;
-        for (auto &edge : edges_) edge->print(stream, indent);
+        
+        for (auto &edge : edges_) edge->print(stream, clusters_, indent);
 
         stream << "}\n";
     }

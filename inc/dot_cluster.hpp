@@ -21,11 +21,11 @@ struct ClusterProperties {
 static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES = 
 {
     .cluster_suffix = "BasicBlock",
-    .color = "red",
+    .color = "#d6ee80ff",
     .fillcolor = "gray",
     .style = "filled",
     .penwidth = 2,
-    .fontcolor = "red",
+    .fontcolor = "black",
     .fontsize = 20,
 };
 
@@ -36,7 +36,7 @@ static inline const ClusterProperties DEFAULT_F_CLUSTER_PROPERTIES =
     .fillcolor = "gray",
     .style = "filled",
     .penwidth = 2,
-    .fontcolor = "red",
+    .fontcolor = "black",
     .fontsize = 20,
 };
 
@@ -86,22 +86,18 @@ public:
         return children_;
     }
 
-    std::string get_cluster_name() const override {
-        return "cluster_" + std::to_string(id_);
-    }
-
     void print_open(std::ostream &stream, const size_t indent) const override {
         const std::string indent_string(indent, ' ');
-        stream << indent_string << "subgraph "      << get_cluster_name()    << " {" << "// " << properties_.cluster_suffix << "\n";
-        stream << indent_string << "  label =\""    << label_                << "\"\n";
-        stream << indent_string << "  color =\""    << properties_.color     << "\"\n"; 
-        stream << indent_string << "  style =\""    << properties_.style     << "\"\n";
-        stream << indent_string << "  penwidth =\"" << properties_.penwidth  << "\"\n";
-        stream << indent_string << "  fontcolor=\"" << properties_.fontcolor << "\"\n";     
-        stream << indent_string << "  fontsize=\""  << properties_.fontsize  << "\"\n";
+        stream << indent_string << "subgraph "      << get_str_identifier(id_) << " {" << "// " << properties_.cluster_suffix << "\n";
+        stream << indent_string << "  label =\""    << label_                  << "\"\n";
+        stream << indent_string << "  color =\""    << properties_.color       << "\"\n"; 
+        stream << indent_string << "  style =\""    << properties_.style       << "\"\n";
+        stream << indent_string << "  penwidth =\"" << properties_.penwidth    << "\"\n";
+        stream << indent_string << "  fontcolor=\"" << properties_.fontcolor   << "\"\n";     
+        stream << indent_string << "  fontsize=\""  << properties_.fontsize    << "\"\n";
         
         for (const INode *child : children_) {
-            child->print(stream, indent);
+            child->print(stream, indent + 2);
         }
     }
 

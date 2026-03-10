@@ -10,6 +10,8 @@ struct EdgeProperties {
     std::string style = "solid";
     std::string arrowhead = "normal";
     int penwidth = 2;
+    int weight = 2;
+    std::string constraint = "true";
 
     EdgeProperties() = default;
 };
@@ -19,7 +21,9 @@ static inline const struct EdgeProperties DEFAULT_DATAEDGE_PROPERTIES =
     .color = "blue",
     .style = "solid",
     .arrowhead = "normal",
-    .penwidth = 2
+    .penwidth = 1,
+    .weight = 1,
+    .constraint = "false"
 };
 
 static inline const struct EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES = 
@@ -27,7 +31,9 @@ static inline const struct EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES =
     .color = "red",
     .style = "solid",
     .arrowhead = "normal",
-    .penwidth = 2
+    .penwidth = 2,
+    .weight = 100,
+    .constraint = "true"
 };
 
 
@@ -51,10 +57,47 @@ public:
         return properties_;
     }
 
-    void print(std::ostream &stream, const size_t indent) const override {
+    void print(
+        std::ostream& stream, 
+        const std::unordered_map<DotId, std::unique_ptr<ICluster>>& clusters,
+        const size_t indent
+    ) const override {
         const std::string indent_string(indent, ' ');
         
-        // TODO!
+        std::string left = get_endpoint_identifier(clusters, left_);
+        std::string right = get_endpoint_identifier(clusters, right_);
+
+        stream << indent_string << left << " -> "<< right;
+        stream << "[";
+        stream << "label=\""      << label_                 << "\" ";
+        stream << "color=\""      << properties_.color      << "\" ";
+        stream << "penwidth=\""   << properties_.penwidth   << "\" ";
+        stream << "weight=\""     << properties_.weight     << "\" ";
+        stream << "style=\""      << properties_.style      << "\" ";
+        stream << "constraint=\"" << properties_.constraint << "\" ";
+        stream << "arrowhead=\""  << properties_.arrowhead  << "\"";
+        stream << "];\n";
+    }
+
+private:
+    std::string get_endpoint_identifier(
+        const std::unordered_map<DotId, std::unique_ptr<ICluster>>& clusters, 
+        const Endpoint endpoint
+    ) const {
+        switch (endpoint.kind)
+        {
+        case Endpoint::Kind::Node:
+            return INode::get_str_identifier(endpoint.id);
+        case Endpoint::Kind::Cluster:
+            if (clusters.find(endpoint.id) == clusters.end()) {
+                throw std::runtime_error("edge endpoint contain incorrect cluster id");
+            }
+            ICluster *cluster = clusters.find(endpoint.id)->second.get();
+            if (cluster->children().empty()) {
+                throw std::runtime_error("edge endpoint cluster has no nodes to connect");
+            }
+            return INode::get_str_identifier(cluster->children().front()->id());
+        }
     }
 };
 

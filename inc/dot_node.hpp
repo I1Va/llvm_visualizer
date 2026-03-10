@@ -22,6 +22,14 @@ static inline const NodeProperties DEFAULT_INSTRNODE_PROPERTIES =
     .style = "filled"
 };
 
+static inline const NodeProperties DEFAULT_VALUENODE_PROPERTIES = 
+{
+    .color = "orange",
+    .shape = "rect",
+    .fillcolor = "#FFD0D0",
+    .style = "filled"
+};
+
 class Node : public INode {
 protected:
     DotId id_;
@@ -53,6 +61,13 @@ class InstrNode final : public Node {
 public:
     InstrNode(DotId id, const std::string& label): Node(id, label) {
         properties_ = DEFAULT_INSTRNODE_PROPERTIES;
+    }
+};
+
+class ValueNode final : public Node {
+public:
+    ValueNode(DotId id, const std::string& label): Node(id, label) {
+        properties_ = DEFAULT_VALUENODE_PROPERTIES;
     }
 };
 
