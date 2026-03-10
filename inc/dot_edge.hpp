@@ -36,6 +36,15 @@ static inline const EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES =
     .constraint = "true"
 };
 
+static inline const EdgeProperties DEFAULT_CALL_EDGE_PROPERTIES = 
+{
+    .color = "#2ca02c",  
+    .style = "dashed",     
+    .arrowhead = "diamond",
+    .penwidth = 2,
+    .weight = 5,           
+    .constraint = "true"
+};
 
 class Edge : public IEdge { 
 protected:
@@ -111,6 +120,15 @@ class FlowEdge final : public Edge {
 public:
     FlowEdge(Endpoint left, Endpoint right, std::string label = ""):
         Edge(left, right, std::move(label)) {properties_ = DEFAULT_FLOWEDGE_PROPERTIES; }
+};
+
+class CallEdge final : public Edge {
+public:
+    CallEdge(Endpoint left, Endpoint right, std::string label = "") :
+        Edge(left, right, std::move(label)) 
+    {
+        properties_ = DEFAULT_CALL_EDGE_PROPERTIES;
+    }
 };
 
 } // namespace dot

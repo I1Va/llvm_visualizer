@@ -29,9 +29,15 @@ struct MyModPass : public PassInfoMixin<MyModPass> {
                     dot::InstrNode* node = dot_builder.create_node_in_cluster<dot::InstrNode>((uint64_t) &I, *BBcluster, I.getOpcodeName());
                     if (prev_node) dot_builder.create_edge<dot::FlowEdge>(*prev_node, *node);
                     
-                    int slot = MST.getLocalSlot(&I);
-                    std::string slot_str = (slot > 0 ? "%" + std::to_string(slot) : "");
-    
+                    // if (llvm::CallBase* callInst = dyn_cast<CallBase>(&I)) { TODO
+                    //     Function* calledFunc = callInst->getCalledFunction();
+                    //     if (calledFunc) {
+                    //         dot::ICluster* func_cluster = 
+                    //             dot_builder.create_cluster<dot::FCluster>((dot::DotId) calledFunc, calledFunc->getName().str());
+                    //         dot_builder.create_edge<dot::CallEdge>(*node, *func_cluster, "");
+                    //     }
+                    // }
+
                     for (auto &U : I.uses()) {
                         Instruction* instr_user = dyn_cast<Instruction> (U.getUser());
                         if (instr_user) {
@@ -42,10 +48,11 @@ struct MyModPass : public PassInfoMixin<MyModPass> {
 
                             dot::InstrNode* user_node = 
                             dot_builder.create_node_in_cluster<dot::InstrNode>((uint64_t) instr_user, *user_cluster, instr_user->getOpcodeName());
-                            dot_builder.create_edge<dot::DataEdge>(*node, *user_node, slot_str);
+                            dot_builder.create_edge<dot::DataEdge>(*node, *user_node, "");
                             continue;
                         }
                     }
+
                     for (auto &U : I.operands()) {
                         BasicBlock* bb_operand = dyn_cast<BasicBlock> (U.get());
                         if (bb_operand) {
