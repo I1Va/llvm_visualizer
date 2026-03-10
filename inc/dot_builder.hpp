@@ -12,9 +12,9 @@ namespace dot
 {
 
 struct GraphProperties {
-    std::string_view name = "G";
-    std::string_view rankdir = "TD";
-    std::string_view splines = "polyline"; 
+    std::string name = "G";
+    std::string rankdir = "TD";
+    std::string splines = "polyline"; 
     double nodesep = 1.0; 
     double ranksep = 1.5;
 };
@@ -183,4 +183,3 @@ public:
 };
 
 } // namespace dot
-

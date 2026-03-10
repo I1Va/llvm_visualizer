@@ -14,10 +14,10 @@ struct MyModPass : public PassInfoMixin<MyModPass> {
         dot::DotBuilder dot_builder;
 
         for (auto& F : M) {
-            dot::FCluster* Fcluster = dot_builder.create_cluster<dot::FCluster>((uint64_t) &F, F.getName());
+            dot::FCluster* Fcluster = dot_builder.create_cluster<dot::FCluster>((uint64_t) &F, F.getName().str());
             for (auto& B : F) {
                 dot::BBCluster* BBcluster = 
-                    dot_builder.create_cluster_with_parent<dot::BBCluster>((uint64_t) &B, *Fcluster, B.getName());
+                    dot_builder.create_cluster_with_parent<dot::BBCluster>((uint64_t) &B, *Fcluster, B.getName().str());
 
                 dot::InstrNode* prev_node = nullptr;
                 for (auto& I : B) {

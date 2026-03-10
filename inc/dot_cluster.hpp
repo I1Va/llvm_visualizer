@@ -45,12 +45,12 @@ protected:
     ClusterProperties properties_;
 
     DotId id_;
-    std::string_view label_;
+    std::string label_;
     
     ICluster *parent_=nullptr;
     std::vector<INode *> children_;
 public:
-    Cluster(DotId cluster_id, std::string_view label):
+    Cluster(DotId cluster_id, const std::string& label):
         id_(cluster_id), label_(label) {}
     
     DotId id() const override { return id_; }
@@ -110,13 +110,11 @@ public:
         stream << indent_string << "}\n";
     }
 
-    
-
 };
 
 class BBCluster final : public Cluster {
 public:
-    BBCluster(DotId cluster_id, std::string_view label) : 
+    BBCluster(DotId cluster_id, const std::string& label) : 
         Cluster(cluster_id, label) {
             properties_ = DEFAULT_BB_CLUSTER_PROPERTIES;
         }
@@ -124,15 +122,10 @@ public:
 
 class FCluster final : public Cluster {
 public:
-    FCluster(DotId cluster_id, std::string_view label) : 
+    FCluster(DotId cluster_id, const std::string& label) : 
         Cluster(cluster_id, label) {
             properties_ = DEFAULT_F_CLUSTER_PROPERTIES;
         }
 };
 
-
-    
-
-
-
-} // namespace dot 
+} // namespace dot

@@ -34,12 +34,12 @@ static inline const struct EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES =
 class Edge : public IEdge { 
 protected:
     Endpoint left_, right_;
-    std::string_view label_;
+    std::string label_;
     EdgeProperties properties_;
 
 public:
-    Edge(Endpoint left, Endpoint right, std::string_view label="") : 
-        left_(left), right_(right), label_(label) {}
+    Edge(Endpoint left, Endpoint right, std::string label = "") : 
+        left_(left), right_(right), label_(std::move(label)) {}
 
     std::string_view label() const override { return label_; }
 
@@ -54,29 +54,20 @@ public:
     void print(std::ostream &stream, const size_t indent) const override {
         const std::string indent_string(indent, ' ');
         
-        // std::string left_name = left_.get_string_identifier();
-        // std::string right_name = right_.get_string_identifier();
-
-        // stream << indent_string << left_name << " -> n" << dst_id_;
-        // stream << "[label=\"" << get_kind_label(kind_) << "\"";
-        // stream << "color="    << color;
-        // stream << "penwidth=" << penwidth;
-        // stream << "style="    << style;
-        // stream << "arrowhead=normal";
-        // stream << "];\n";
+        // TODO!
     }
 };
 
 class DataEdge final : public Edge {
 public:
-    DataEdge(Endpoint left, Endpoint right, std::string_view label=""):
-        Edge(left, right, label) {properties_ = DEFAULT_DATAEDGE_PROPERTIES; }
+    DataEdge(Endpoint left, Endpoint right, std::string label = ""):
+        Edge(left, right, std::move(label)) {properties_ = DEFAULT_DATAEDGE_PROPERTIES; }
 };
 
 class FlowEdge final : public Edge {
 public:
-    FlowEdge(Endpoint left, Endpoint right, std::string_view label=""):
-        Edge(left, right, label) {properties_ = DEFAULT_FLOWEDGE_PROPERTIES; }
+    FlowEdge(Endpoint left, Endpoint right, std::string label = ""):
+        Edge(left, right, std::move(label)) {properties_ = DEFAULT_FLOWEDGE_PROPERTIES; }
 };
 
 } // namespace dot
