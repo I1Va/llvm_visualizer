@@ -6,33 +6,33 @@ namespace dot
 {
 
 struct EdgeProperties {
-    std::string color = "red";
-    std::string style = "solid";
-    std::string arrowhead = "normal";
-    int penwidth = 2;
-    int weight = 2;
-    std::string constraint = "true";
+    std::string color = "black";       
+    std::string style = "solid";       
+    std::string arrowhead = "normal";  
+    int penwidth = 1;                  
+    int weight = 1;                    
+    std::string constraint = "true";   
 
     EdgeProperties() = default;
 };
 
-static inline const struct EdgeProperties DEFAULT_DATAEDGE_PROPERTIES = 
+static inline const EdgeProperties DEFAULT_DATAEDGE_PROPERTIES = 
 {
-    .color = "blue",
-    .style = "solid",
-    .arrowhead = "normal",
+    .color = "#1f77b4",   
+    .style = "dashed",    
+    .arrowhead = "vee",
     .penwidth = 1,
     .weight = 1,
-    .constraint = "false"
+    .constraint = "true" 
 };
 
-static inline const struct EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES = 
+static inline const EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES = 
 {
-    .color = "red",
+    .color = "#d62728",   
     .style = "solid",
     .arrowhead = "normal",
     .penwidth = 2,
-    .weight = 100,
+    .weight = 10,         
     .constraint = "true"
 };
 

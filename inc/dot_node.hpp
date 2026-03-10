@@ -6,28 +6,37 @@ namespace dot
 {
 
 struct NodeProperties {
-    std::string color = "red";
-    std::string shape = "rect";
-    std::string fillcolor = "#FFD0D0";
-    std::string style = "filled";
+    std::string color = "#000000";      
+    std::string shape = "rect";          
+    std::string fillcolor = "#ffffff";   
+    std::string style = "filled,rounded";
+    std::string fontcolor = "#000000";   
+    int fontsize = 14;                   
+    int penwidth = 1;                    
 
     NodeProperties() = default;
 };
 
 static inline const NodeProperties DEFAULT_INSTRNODE_PROPERTIES = 
 {
-    .color = "red",
+    .color = "#d62728",          
     .shape = "rect",
-    .fillcolor = "#FFD0D0",
-    .style = "filled"
+    .fillcolor = "#f8d7da",      
+    .style = "filled,rounded",
+    .fontcolor = "#800000",      
+    .fontsize = 14,
+    .penwidth = 2
 };
 
 static inline const NodeProperties DEFAULT_VALUENODE_PROPERTIES = 
 {
-    .color = "orange",
+    .color = "#ff7f0e",         
     .shape = "rect",
-    .fillcolor = "#FFD0D0",
-    .style = "filled"
+    .fillcolor = "#ffe6cc",     
+    .style = "filled,rounded",
+    .fontcolor = "#803d00",     
+    .fontsize = 14,
+    .penwidth = 2
 };
 
 class Node : public INode {
@@ -50,9 +59,14 @@ public:
         const std::string indent_string(indent, ' ');
         stream << indent_string << "n" << id_;
         stream << " [";
-        stream << "label=\""        << label_ << "\" ";
-        stream << "shape=\""        << properties_.shape << "\" "; 
-        stream << "fillcolor=\""    << properties_.fillcolor << "\" ";
+        stream << "label=\""        << label_                   << "\" ";
+        stream << "color=\""        << properties_.color        << "\" "; 
+        stream << "shape=\""        << properties_.shape        << "\" ";
+        stream << "fillcolor=\""    << properties_.fillcolor    << "\" ";
+        stream << "style=\""        << properties_.style        << "\" ";
+        stream << "fontcolor=\""    << properties_.fontcolor    << "\" ";
+        stream << "fontsize=\""     << properties_.fontsize     << "\" ";
+        stream << "penwidth=\""     << properties_.penwidth     << "\"";
         stream << "];\n";
     }
 };

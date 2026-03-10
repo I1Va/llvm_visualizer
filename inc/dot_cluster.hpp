@@ -8,12 +8,12 @@ namespace dot
 
 struct ClusterProperties {
     std::string cluster_suffix = "";
-    std::string color = "red";
-    std::string fillcolor = "gray";
-    std::string style = "filled";
+    std::string color = "#000000";       
+    std::string fillcolor = "#cccccc";   
+    std::string style = "filled,rounded"; 
     int penwidth = 2; 
-    std::string fontcolor = "red";
-    int fontsize = 20;
+    std::string fontcolor = "#000000";   
+    int fontsize = 16;
 
     ClusterProperties() = default;
 };
@@ -21,23 +21,23 @@ struct ClusterProperties {
 static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES = 
 {
     .cluster_suffix = "BasicBlock",
-    .color = "#d6ee80ff",
-    .fillcolor = "gray",
-    .style = "filled",
+    .color = "#4f81bd",          
+    .fillcolor = "#dce6f1",      
+    .style = "filled,rounded",
     .penwidth = 2,
-    .fontcolor = "black",
-    .fontsize = 20,
+    .fontcolor = "#0b3d91",      
+    .fontsize = 16,
 };
 
 static inline const ClusterProperties DEFAULT_F_CLUSTER_PROPERTIES = 
 {
     .cluster_suffix = "Function",
-    .color = "green",
-    .fillcolor = "gray",
-    .style = "filled",
+    .color = "#c0504d",          
+    .fillcolor = "#f2dcdb",      
+    .style = "filled,rounded",
     .penwidth = 2,
-    .fontcolor = "black",
-    .fontsize = 20,
+    .fontcolor = "#801818",      
+    .fontsize = 18,
 };
 
 class Cluster : public ICluster {
@@ -88,13 +88,14 @@ public:
 
     void print_open(std::ostream &stream, const size_t indent) const override {
         const std::string indent_string(indent, ' ');
-        stream << indent_string << "subgraph "      << get_str_identifier(id_) << " {" << "// " << properties_.cluster_suffix << "\n";
-        stream << indent_string << "  label =\""    << label_                  << "\"\n";
-        stream << indent_string << "  color =\""    << properties_.color       << "\"\n"; 
-        stream << indent_string << "  style =\""    << properties_.style       << "\"\n";
-        stream << indent_string << "  penwidth =\"" << properties_.penwidth    << "\"\n";
-        stream << indent_string << "  fontcolor=\"" << properties_.fontcolor   << "\"\n";     
-        stream << indent_string << "  fontsize=\""  << properties_.fontsize    << "\"\n";
+        stream << indent_string << "subgraph "       << get_str_identifier(id_) << " {" << "// " << properties_.cluster_suffix << "\n";
+        stream << indent_string << "  label =\""     << label_                  << "\"\n";
+        stream << indent_string << "  fillcolor =\"" << properties_.fillcolor   << "\"\n"; 
+        stream << indent_string << "  color =\""     << properties_.color       << "\"\n"; 
+        stream << indent_string << "  style =\""     << properties_.style       << "\"\n";
+        stream << indent_string << "  penwidth =\""  << properties_.penwidth    << "\"\n";
+        stream << indent_string << "  fontcolor=\""  << properties_.fontcolor   << "\"\n";     
+        stream << indent_string << "  fontsize=\""   << properties_.fontsize    << "\"\n";
         
         for (const INode *child : children_) {
             child->print(stream, indent + 2);

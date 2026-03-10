@@ -61,7 +61,7 @@ public:
     virtual ~ICluster() = default;
 
     static std::string get_str_identifier(const DotId id) {
-        return "cluster_" + std::to_string(id);
+        return "cluster" + std::to_string(id);
     }
 };
 
