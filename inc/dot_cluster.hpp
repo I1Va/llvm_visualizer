@@ -100,6 +100,7 @@ public:
         for (const INode *child : children_) {
             child->print(stream, indent + 2);
         }
+    
         if (children_.empty()) {
             const std::string indent_string(indent + 2, ' ');
             stream << indent_string << get_fict_node_str_id() << "[label=\"\", shape=\"point\"]\n";

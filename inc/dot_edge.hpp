@@ -75,6 +75,9 @@ public:
         
         std::string left = get_endpoint_identifier(clusters, left_);
         std::string right = get_endpoint_identifier(clusters, right_);
+        if (left.empty() || right.empty()) {
+            return;
+        }
 
         stream << indent_string << left << " -> "<< right;
         stream << "[";
@@ -99,7 +102,7 @@ private:
             return INode::get_str_identifier(endpoint.id);
         case Endpoint::Kind::Cluster:
             if (clusters.find(endpoint.id) == clusters.end()) {
-                throw std::runtime_error("edge endpoint contain incorrect cluster id");
+                return "";
             }
             ICluster *cluster = clusters.find(endpoint.id)->second.get();
             if (cluster->children().empty()) {

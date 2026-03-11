@@ -8,7 +8,7 @@
 #include "dot_edge.hpp"
 #include "dot_cluster.hpp"
 
-#include <iostream>
+#include "llvm/Support/raw_ostream.h"
 
 namespace dot
 {
@@ -127,6 +127,7 @@ public:
                       "NodeT must derive from INode");
         DotId cid = cluster.id();
         if (clusters_.find(cid) == clusters_.end()) {
+            llvm::errs() << "error\n";
             throw std::runtime_error("cluster not owned by builder");
         }
 
