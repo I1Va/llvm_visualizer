@@ -100,11 +100,19 @@ public:
         for (const INode *child : children_) {
             child->print(stream, indent + 2);
         }
+        if (children_.empty()) {
+            const std::string indent_string(indent + 2, ' ');
+            stream << indent_string << get_fict_node_str_id() << "[label=\"\", shape=\"point\"]\n";
+        }
     }
 
     void print_close(std::ostream &stream, const size_t indent) const override {
         const std::string indent_string(indent, ' ');
         stream << indent_string << "}\n";
+    }
+
+    std::string get_fict_node_str_id() const override {
+        return "cluster_fictitious_node" + std::to_string(id_);
     }
 
 };

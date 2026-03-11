@@ -103,7 +103,7 @@ private:
             }
             ICluster *cluster = clusters.find(endpoint.id)->second.get();
             if (cluster->children().empty()) {
-                throw std::runtime_error("edge endpoint cluster has no nodes to connect");
+                return cluster->get_fict_node_str_id();
             }
             return INode::get_str_identifier(cluster->children().front()->id());
         }

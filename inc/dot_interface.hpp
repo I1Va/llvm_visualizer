@@ -58,6 +58,8 @@ public:
     virtual void print_open(std::ostream &stream, const size_t indent) const = 0;
     virtual void print_close(std::ostream &stream, const size_t indent) const = 0;
 
+    virtual std::string get_fict_node_str_id() const = 0;
+
     virtual ~ICluster() = default;
 
     static std::string get_str_identifier(const DotId id) {
