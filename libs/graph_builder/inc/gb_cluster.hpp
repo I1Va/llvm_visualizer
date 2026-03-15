@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cassert>
+#include <vector>
+#include <algorithm>
 #include "gb_interface.hpp"
 
 namespace gb 
@@ -23,8 +25,13 @@ public:
     const std::string &label() const override { return label_; }
     std::string &label() override { return label_; }
 
-    const ICluster* parent() const override { return parent_; }
     ICluster* parent() override { return parent_; }
+    const ICluster* parent() const override { return parent_; }
+    void set_parent(ICluster* parent) override {
+        if (parent_) parent_->remove_cluster(this);
+        parent_ = parent;
+        if (parent) parent->clusters().push_back(this);
+    }
 
     const std::vector<INode*>& nodes() const override { return nodes_; }
     std::vector<INode*>& nodes() override { return nodes_; }
@@ -32,17 +39,26 @@ public:
     const std::vector<ICluster*>& clusters() const override { return clusters_; }
     std::vector<ICluster*>& clusters() override { return clusters_; }
 
-    ICluster* parent() override { return parent_; }
-    const ICluster* parent() const override { return parent_; }
-
-    void set_parent(ICluster* parent) override {
-        if (parent_) parent_->remove_cluster(this);
-        parent_ = parent;
-    }
-
     void remove_cluster(ICluster* cluster) override {
-        std::erase(clusters_, cluster);
+        for (auto it = clusters_.begin(); it != clusters_.end(); ++it) {
+            if (*it == cluster) {
+                *it = clusters_.back();
+                clusters_.pop_back();
+                return;
+            }
+        }
     }
+
+    void remove_node(INode* node) override {
+        for (auto it = nodes_.begin(); it != nodes_.end(); ++it) {
+            if (*it == node) {
+                *it = nodes_.back();
+                nodes_.pop_back();
+                return;
+            }
+        }
+    }
+
 };
 
 } // namespace dot

@@ -8,8 +8,17 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
 
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/Passes/PassBuilder.h"
+
 #include "dot_builder.hpp"
 #include "graph_builder.hpp"
+#include <iostream>
+#include <fstream>
+#include <google/protobuf/stubs/common.h>
+#include "serializer.hpp"
 
 using namespace llvm;
 
@@ -17,261 +26,144 @@ using namespace llvm;
 #include <string>
 #include <sstream>
 
+using InstrNode = gb::Node;
+using ValueNode = gb::Node;
+using FCluster  = gb::Cluster;
+using BBCluster = gb::Cluster;
+using FlowEdge  = gb::Edge;
+using DataEdge  = gb::Edge;
+using CallEdge  = gb::Edge;
+
 class MyModPass : public PassInfoMixin<MyModPass> {
-    const char DOT_DUMP_FILE_PATH[10] = "graph.dot";
+    Type *voidTy;
+    Type *int8PtrTy;
+    Type *int32Ty;
+    Type *int64Ty;
+
 public:
-    PreservedAnalyses run(Module& M, ModuleAnalysisManager& AM) {
-        dot::DotBuilder dot_builder;
-        ModuleSlotTracker MST(&M);
-
+    PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM) {
         gb::GraphBuilder graph_builder;
-        
-        if (auto err = build_dot_graph(M, MST, dot_builder)) {
-            errs() << "Error building dot graph: " << toString(std::move(err)) << "\n";
-            return PreservedAnalyses::all();
-        }
-        
-        if (auto err = dump_dot(DOT_DUMP_FILE_PATH, dot_builder)) {
-            errs() << "Error dumping dot file: " << toString(std::move(err)) << "\n";
-            return PreservedAnalyses::all();
-        }
+        ModuleSlotTracker MST(&M);
+        LLVMContext &Ctx = M.getContext();
+        IRBuilder<> builder(Ctx);
 
+        voidTy = Type::getVoidTy(Ctx);
+        int8PtrTy = PointerType::get(Ctx, 0);
+        int32Ty = Type::getInt32Ty(Ctx);
+        int64Ty = Type::getInt64Ty(Ctx);
+
+        for (auto &F : M) {
+            if (F.isDeclaration()) continue;
+            MST.incorporateFunction(F);
+
+            auto* f_cl = graph_builder.create_cluster<FCluster>((gb::IdT)&F);
+            f_cl->label() = F.getName().str();
+
+            for (auto &BB : F) {
+                insert_basic_block_start_log(M, BB, builder);
+                auto* bb_cl = graph_builder.create_cluster<BBCluster>((gb::IdT)&BB);
+                bb_cl->label() = BB.getName().str();
+                bb_cl->set_parent(f_cl); 
+
+                for (auto &I : BB) {
+                    if (auto err = build_instruction_nodes(I, *bb_cl, *f_cl, graph_builder, MST)) {
+                        errs() << "Error: " << toString(std::move(err)) << "\n";
+                    }
+                }
+            }
+
+            outs() << '\n';
+            bool verif = verifyFunction(F, &outs());
+            outs() << "[VERIFICATION] " << (verif ? "FAIL\n\n" : "OK\n\n");
+        }
+        
         return PreservedAnalyses::all();
     }
 
 private:
-    Error build_instruction_control_edges
-    (
-        Module& M,
-        ModuleSlotTracker& MST,
-        dot::FCluster& Fcluster,
-        dot::BBCluster& BBcluster,
-        Instruction& I,
-        dot::DotBuilder& dot_builder
-    ) {
-        std::string instrStr = get_instr_str(I);
+    // void insert_basic_block_start_log(Module &M, BasicBlock &B, IRBuilder<> &builder) {
+    //     ArrayRef<Type *> bb_start_param_types = {int64Ty};
+    //     FunctionType *bb_start_func_type =
+    //         FunctionType::get(voidTy, bb_start_param_types, false);
+    //     FunctionCallee bb_start_func =
+    //         M.getOrInsertFunction("basic_block_start_logger", bb_start_func_type);
+       
+    //     builder.SetInsertPoint(&*B.getFirstInsertionPt());
 
-        dot::InstrNode* node = dot_builder.create_node_in_cluster<dot::InstrNode>(
-            (uint64_t) &I, BBcluster, I.getOpcodeName());
-        if (!node) {
-            return createStringError(std::errc::invalid_argument,
-                "failed to create InstrNode for `%s` in basic block", instrStr.c_str());
-        }
+    //     uintptr_t bb_id = reinterpret_cast<uintptr_t>(&B);
+    //     Value *idArg = ConstantInt::get(int64Ty, bb_id);
+    //     builder.CreateCall(bb_start_func, {idArg});
+    // }
 
-        if (auto* prev_inst = I.getPrevNode()) {
-            dot::INode* prev_node = dot_builder.get_node_by_id((uint64_t) prev_inst);
-            if (!prev_node) {
-                return createStringError(std::errc::invalid_argument,
-                    "failed to get previous InstrNode for `%s` in basic block", instrStr.c_str());
-            }
+    void insert_basic_block_start_log(Module &M, BasicBlock &B, IRBuilder<> &builder) {
+        FunctionType *bb_start_func_type =
+            FunctionType::get(voidTy, {int64Ty}, false);
+        FunctionCallee bb_start_func =
+            M.getOrInsertFunction("basic_block_start_logger", bb_start_func_type);
+       
+        builder.SetInsertPoint(&*B.getFirstInsertionPt());
 
-            if (!dot_builder.create_edge<dot::FlowEdge>(*prev_node, *node)) {
-                const char* Msg = "failed to create FlowEdge between instructions";
-                return createStringError(std::errc::invalid_argument, "%s", Msg);
-            }
-        }
-        
-        if (CallBase* callInst = dyn_cast<CallBase>(&I)) {
-            if (Function* calledFunc = callInst->getCalledFunction()) {
-                dot::ICluster* func_cluster = 
-                    dot_builder.create_cluster<dot::FCluster>(
-                        (dot::DotId) calledFunc, calledFunc->getName().str());
-                if (!func_cluster) {
-                    return createStringError(std::errc::invalid_argument,
-                        "failed to create Function Cluster for called function: %s", 
-                        calledFunc->getName().str().c_str());
-                }
-
-                if (!dot_builder.create_edge<dot::CallEdge>(*node, *func_cluster, "")) {
-                    return createStringError(std::errc::invalid_argument,
-                        "failed to create CallEdge to function: %s", 
-                        calledFunc->getName().str().c_str());
-                }
-            }
-        }
-        
-        for (auto &U : I.operands()) {
-            BasicBlock* bb_operand = dyn_cast<BasicBlock>(U.get());
-            if (bb_operand) {
-                dot::BBCluster *bb_cluster = 
-                    dot_builder.create_cluster_with_parent<dot::BBCluster>(
-                        (uint64_t) bb_operand, Fcluster, bb_operand->getName().str());
-                if (!bb_cluster) {
-                    return createStringError(std::errc::invalid_argument,
-                        "failed to create operand basic block cluster for block: %s", 
-                        bb_operand->getName().str().c_str());
-                }
-                
-                if (!dot_builder.create_edge<dot::FlowEdge>(*node, *bb_cluster, "")) {
-                    return createStringError(std::errc::invalid_argument,
-                        "failed to create FlowEdge to basic block: %s", 
-                        bb_operand->getName().str().c_str());
-                }
-            }
-        }
-
-        return Error::success();
+        uintptr_t bb_id = reinterpret_cast<uintptr_t>(&B);
+        Value *idArg = ConstantInt::get(int64Ty, bb_id);
+        builder.CreateCall(bb_start_func, {idArg});
     }
-        
-    Error build_instruction_data_edges
-    (
-        Module& M,
-        ModuleSlotTracker& MST,
-        dot::FCluster& Fcluster,
-        dot::BBCluster& BBcluster,
-        Instruction& I,
-        dot::DotBuilder& dot_builder
-    ) {
-        dot::InstrNode* node = dot_builder.create_node_in_cluster<dot::InstrNode>(
-            (uint64_t) &I, BBcluster, I.getOpcodeName());
-        if (!node) {
-            const char* Msg = "failed to create InstrNode for data flow in instruction";
-            return createStringError(std::errc::invalid_argument, "%s", Msg);
-        }
 
-        for (auto &U : I.uses()) {
-            if (Instruction* instr_user = dyn_cast<Instruction>(U.getUser())) {
-                BasicBlock *user_basic_block = instr_user->getParent();
-                if (!user_basic_block) {
-                    const char* Msg = "instruction user has no parent basic block";
-                    return createStringError(std::errc::invalid_argument, "%s", Msg);
-                }
-                
-                dot::ICluster* user_cluster = 
-                    dot_builder.create_cluster_with_parent<dot::BBCluster>(
-                        (dot::DotId) user_basic_block, Fcluster, user_basic_block->getName().str());
-                if (!user_cluster) {
-                    return createStringError(std::errc::invalid_argument,
-                        "failed to create user cluster for basic block: %s", 
-                        user_basic_block->getName().str().c_str());
-                }
-                    
-                dot::InstrNode* user_node = 
-                    dot_builder.create_node_in_cluster<dot::InstrNode>(
-                        (uint64_t) instr_user, *user_cluster, instr_user->getOpcodeName());
-                if (!user_node) {
-                    const char* Msg = "failed to create user instruction node";
-                    return createStringError(std::errc::invalid_argument, "%s", Msg);
-                }
-                
-                if (!dot_builder.create_edge<dot::DataEdge>(*node, *user_node, "")) {
-                    const char* Msg = "failed to create DataEdge between instructions";
-                    return createStringError(std::errc::invalid_argument, "%s", Msg);
-                }
+    Error build_instruction_nodes(Instruction &I, BBCluster &bb_cl, FCluster &f_cl, 
+                                    gb::GraphBuilder &graph_builder, ModuleSlotTracker &MST) {
+            
+        auto* i_node = graph_builder.create_node<InstrNode>((gb::IdT)&I);
+        i_node->label() = I.getOpcodeName();
+        i_node->set_parent(&bb_cl);
+
+        if (auto* prev = I.getPrevNode()) {
+            if (auto* prev_node = graph_builder.get_node((gb::IdT)prev)) {
+                graph_builder.create_edge<FlowEdge>(*prev_node, *i_node);
             }
         }
 
         for (auto &U : I.operands()) {
-            Value* value_op = U.get();
-            if (!value_op) continue;
-
-            dot::DotId node_id = (dot::DotId) value_op;
-            if (!dot_builder.node_id_exist(node_id)) {
-                dot::ValueNode* value_node = 
-                    dot_builder.create_node_in_cluster<dot::ValueNode>(
-                        (uint64_t) value_op, BBcluster, get_value_str(*value_op, MST));
-                if (!value_node) {
-                    const char* Msg = "failed to create ValueNode for operand";
-                    return createStringError(std::errc::invalid_argument, "%s", Msg);
-                }
-                
-                if (!dot_builder.create_edge<dot::DataEdge>(*value_node, *node, "")) {
-                    const char* Msg = "failed to create DataEdge from value to instruction";
-                    return createStringError(std::errc::invalid_argument, "%s", Msg);
-                }
+            if (auto* target_bb = dyn_cast<BasicBlock>(U.get())) {
+                auto* target_cl = graph_builder.create_cluster<BBCluster>((gb::IdT)target_bb);
+                graph_builder.create_edge<FlowEdge>(*i_node, *target_cl);
             }
+        }
+
+        for (auto &U : I.operands()) {
+            Value* val = U.get();
+            if (val && !isa<BasicBlock>(val)) {
+                auto* v_node = graph_builder.create_node<ValueNode>((gb::IdT)val);
+                if (v_node->label().empty()) {
+                    v_node->label() = get_value_str(*val, MST);
+                    v_node->set_parent(&bb_cl);
+                }
+                graph_builder.create_edge<DataEdge>(*v_node, *i_node);
+            }
+        }
+
+        if (auto* cb = dyn_cast<CallBase>(&I)) {
+            if (auto* callee = cb->getCalledFunction()) {
+                auto* callee_cl = graph_builder.create_cluster<FCluster>((gb::IdT)callee);
+                callee_cl->label() = callee->getName().str();
+                graph_builder.create_edge<CallEdge>(*i_node, *callee_cl);
+            }
+        }
+
+        GOOGLE_PROTOBUF_VERIFY_VERSION;
+        if (gb::ProtobufSerializer::Serialize(graph_builder, "graph.bin") != 0) {
+            return llvm::make_error<llvm::StringError>(
+                "serialization failed", 
+                llvm::inconvertibleErrorCode()
+            );
         }
 
         return Error::success();
     }
 
-    Error build_dot_graph
-    (
-        Module& M,
-        ModuleSlotTracker& MST,
-        dot::DotBuilder& dot_builder
-    ) {
-        for (auto& F : M) {
-            MST.incorporateFunction(F);
-            dot::FCluster* Fcluster = dot_builder.create_cluster<dot::FCluster>((uint64_t) &F, F.getName().str());
-            if (!Fcluster) {
-                return createStringError(std::errc::invalid_argument,
-                    "failed to create Function Cluster for function: %s", F.getName().str().c_str());
-            }
-    
-            for (auto& B : F) {
-                dot::BBCluster* BBcluster = dot_builder.create_cluster_with_parent<dot::BBCluster>(
-                    (uint64_t) &B, *Fcluster, B.getName().str());
-                if (!BBcluster) {
-                    return createStringError(std::errc::invalid_argument,
-                        "failed to create BasicBlock Cluster for block: %s in function: %s", 
-                        B.getName().str().c_str(), F.getName().str().c_str());
-                }
-
-                for (auto& I : B) {
-                    std::string instrStr = get_instr_str(I);
-
-                    if (auto err = build_instruction_control_edges(M, MST, *Fcluster, *BBcluster, I, dot_builder)) {
-                        std::string errStr = toString(std::move(err));
-                        return createStringError(std::errc::invalid_argument,
-                            "Error building `%s` control edges: %s", 
-                            instrStr.c_str(), errStr.c_str());
-                    }
-
-                    if (auto err = build_instruction_data_edges(M, MST, *Fcluster, *BBcluster, I, dot_builder)) {
-                        std::string errStr = toString(std::move(err));
-                        return createStringError(std::errc::invalid_argument,
-                            "Error building `%s` data edges: %s", 
-                            instrStr.c_str(), errStr.c_str());
-                    }
-                }
-            }
-        }
-        
-        return Error::success();
-    }
-
-    Error dump_dot(const std::string &path, dot::DotBuilder& dot_builder) {
-        std::string result;
-        {
-            std::ostringstream sstream;
-            dot_builder.serialize_dot(sstream);
-            result = sstream.str();
-        }
-    
-        std::error_code EC;
-        raw_fd_ostream dot_file(path, EC, sys::fs::OF_Text);
-        if (EC) {
-            return createStringError(std::errc::io_error,
-                "Error opening file '%s': %s", path.c_str(), EC.message().c_str());
-        }
-        
-        dot_file << result;
-        if (dot_file.has_error()) {
-            return createStringError(std::errc::io_error,
-                "Error writing to file '%s'", path.c_str());
-        }
-        
-        return Error::success();
-    }
-    
-    std::string get_instr_str(Instruction& I) {
-        std::string str;
-        llvm::raw_string_ostream rso(str);
-        I.print(rso);
-        return rso.str();
-    }
-    
-    std::string get_value_str(Value& value, ModuleSlotTracker& MST) {
-        std::string value_str;
-        raw_string_ostream value_str_stream(value_str);
-        value.printAsOperand(value_str_stream, false, MST);
-
-        std::string value_type_str;
-        raw_string_ostream value_type_str_stream(value_type_str);
-        value.getType()->print(value_type_str_stream); 
-
-        return value_type_str_stream.str() + " " + value_str;
+    std::string get_value_str(Value& v, ModuleSlotTracker& MST) {
+        std::string s;
+        raw_string_ostream rso(s);
+        v.printAsOperand(rso, false, MST);
+        return s;
     }
 };
 

@@ -4,5 +4,9 @@ build/
 *.so
 *.png
 *.dot
+*.out
 
 notes/
+
+graph.bin
+logger.o

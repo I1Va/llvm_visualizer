@@ -8,10 +8,12 @@ target triple = "x86_64-pc-linux-gnu"
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind sspstrong willreturn memory(none) uwtable
 define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
+  call void @basic_block_start_logger(i64 94259642684144)
   %2 = icmp ult i64 %0, 2
   br i1 %2, label %45, label %3
 
 3:                                                ; preds = %1
+  call void @basic_block_start_logger(i64 94259642661232)
   %4 = add i64 %0, -1
   %5 = add i64 %0, -2
   %6 = and i64 %4, 7
@@ -19,6 +21,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   br i1 %7, label %32, label %8
 
 8:                                                ; preds = %3
+  call void @basic_block_start_logger(i64 94259643457232)
   %9 = and i64 %4, -8
   br label %10
 
@@ -26,6 +29,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %11 = phi i64 [ %0, %8 ], [ %28, %10 ]
   %12 = phi i64 [ 1, %8 ], [ %29, %10 ]
   %13 = phi i64 [ 0, %8 ], [ %30, %10 ]
+  call void @basic_block_start_logger(i64 94259643237920)
   %14 = add i64 %11, -1
   %15 = mul i64 %11, %12
   %16 = add i64 %11, -2
@@ -50,6 +54,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %33 = phi i64 [ poison, %3 ], [ %29, %10 ]
   %34 = phi i64 [ %0, %3 ], [ %28, %10 ]
   %35 = phi i64 [ 1, %3 ], [ %29, %10 ]
+  call void @basic_block_start_logger(i64 94259643456048)
   %36 = icmp eq i64 %6, 0
   br i1 %36, label %45, label %37
 
@@ -57,6 +62,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %38 = phi i64 [ %41, %37 ], [ %34, %32 ]
   %39 = phi i64 [ %42, %37 ], [ %35, %32 ]
   %40 = phi i64 [ %43, %37 ], [ 0, %32 ]
+  call void @basic_block_start_logger(i64 94259642445376)
   %41 = add i64 %38, -1
   %42 = mul i64 %38, %39
   %43 = add i64 %40, 1
@@ -65,25 +71,30 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
 
 45:                                               ; preds = %32, %37, %1
   %46 = phi i64 [ 1, %1 ], [ %33, %32 ], [ %42, %37 ]
+  call void @basic_block_start_logger(i64 94259643237824)
   ret i64 %46
 }
 
 ; Function Attrs: mustprogress norecurse nounwind sspstrong uwtable
 define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef readonly captures(none) %1) local_unnamed_addr #1 {
+  call void @basic_block_start_logger(i64 94259643229120)
   %3 = icmp eq i32 %0, 2
   br i1 %3, label %6, label %4
 
 4:                                                ; preds = %2
+  call void @basic_block_start_logger(i64 94259643229216)
   %5 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.2)
   br label %64
 
 6:                                                ; preds = %2
+  call void @basic_block_start_logger(i64 94259643255600)
   %7 = tail call ptr @__errno_location() #6
   %8 = load i32, ptr %7, align 4, !tbaa !7
   %9 = icmp eq i32 %8, 0
   br i1 %9, label %10, label %62
 
 10:                                               ; preds = %6
+  call void @basic_block_start_logger(i64 94259643263056)
   %11 = getelementptr inbounds nuw i8, ptr %1, i64 8
   %12 = load ptr, ptr %11, align 8, !tbaa !11
   %13 = tail call i64 @__isoc23_strtol(ptr noundef nonnull %12, ptr noundef null, i32 noundef 10) #7
@@ -93,6 +104,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   br i1 %16, label %59, label %17
 
 17:                                               ; preds = %10
+  call void @basic_block_start_logger(i64 94259643513184)
   %18 = add nsw i64 %15, -1
   %19 = add nsw i64 %15, -2
   %20 = and i64 %18, 7
@@ -100,6 +112,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   br i1 %21, label %46, label %22
 
 22:                                               ; preds = %17
+  call void @basic_block_start_logger(i64 94259643533056)
   %23 = and i64 %18, -8
   br label %24
 
@@ -107,6 +120,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   %25 = phi i64 [ %15, %22 ], [ %42, %24 ]
   %26 = phi i64 [ 1, %22 ], [ %43, %24 ]
   %27 = phi i64 [ 0, %22 ], [ %44, %24 ]
+  call void @basic_block_start_logger(i64 94259642445648)
   %28 = add i64 %25, -1
   %29 = mul i64 %26, %25
   %30 = add i64 %25, -2
@@ -131,6 +145,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   %47 = phi i64 [ poison, %17 ], [ %43, %24 ]
   %48 = phi i64 [ %15, %17 ], [ %42, %24 ]
   %49 = phi i64 [ 1, %17 ], [ %43, %24 ]
+  call void @basic_block_start_logger(i64 94259642439184)
   %50 = icmp eq i64 %20, 0
   br i1 %50, label %59, label %51
 
@@ -138,6 +153,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   %52 = phi i64 [ %55, %51 ], [ %48, %46 ]
   %53 = phi i64 [ %56, %51 ], [ %49, %46 ]
   %54 = phi i64 [ %57, %51 ], [ 0, %46 ]
+  call void @basic_block_start_logger(i64 94259643237728)
   %55 = add i64 %52, -1
   %56 = mul i64 %53, %52
   %57 = add i64 %54, 1
@@ -146,15 +162,18 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
 
 59:                                               ; preds = %46, %51, %10
   %60 = phi i64 [ 1, %10 ], [ %47, %46 ], [ %56, %51 ]
+  call void @basic_block_start_logger(i64 94259643449200)
   %61 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.1, i64 noundef %15, i64 noundef %60)
   br label %64
 
 62:                                               ; preds = %6
+  call void @basic_block_start_logger(i64 94259643263248)
   %63 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.2)
   br label %64
 
 64:                                               ; preds = %62, %59, %4
   %65 = phi i32 [ 1, %4 ], [ 0, %59 ], [ 1, %62 ]
+  call void @basic_block_start_logger(i64 94259642351184)
   ret i32 %65
 }
 
@@ -169,6 +188,8 @@ declare i64 @__isoc23_strtol(ptr noundef, ptr noundef, i32 noundef) local_unname
 
 ; Function Attrs: nofree nounwind
 declare noundef i32 @puts(ptr noundef readonly captures(none)) local_unnamed_addr #5
+
+declare void @basic_block_start_logger(i64)
 
 attributes #0 = { mustprogress nofree norecurse nosync nounwind sspstrong willreturn memory(none) uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { mustprogress norecurse nounwind sspstrong uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
