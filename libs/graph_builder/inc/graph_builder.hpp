@@ -1,8 +1,12 @@
 #pragma once
 
-#include "gb_interface.hpp"
 #include <map>
 #include <memory>
+
+#include "gb_interface.hpp"
+#include "gb_node.hpp"
+#include "gb_edge.hpp"
+#include "gb_cluster.hpp"
 
 namespace gb
 {
@@ -22,6 +26,14 @@ public:
     bool is_cluster(const IdT id) {
         return clusters_.find(id) != clusters_.end();
     }
+
+    const std::map<IdT, std::unique_ptr<INode>>                 &nodes() const { return nodes_; };
+    const std::map<IdT, std::unique_ptr<ICluster>>              &clusters() const { return clusters_; };
+    const std::map<std::pair<IdT, IdT>, std::unique_ptr<IEdge>> &edges() const { return edges_; };
+    std::map<IdT, std::unique_ptr<INode>>                       &nodes() { return nodes_; };
+    std::map<IdT, std::unique_ptr<ICluster>>                    &clusters() { return clusters_; };
+    std::map<std::pair<IdT, IdT>, std::unique_ptr<IEdge>>       &edges() { return edges_; };
+
 
 private:
     template <typename EdgeT>

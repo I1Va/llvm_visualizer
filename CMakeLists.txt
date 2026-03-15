@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(libs/graph_builder)
+add_subdirectory(libs/serializer)
 
 add_library(${PROJECT_NAME} SHARED
     main.cpp
@@ -17,6 +18,7 @@ execute_process(
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     graph_builder
+    serializer
 )
 
 target_include_directories(${PROJECT_NAME}

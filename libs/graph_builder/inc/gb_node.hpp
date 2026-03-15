@@ -9,7 +9,7 @@ class Node : public INode {
 protected:
     IdT id_;
     std::string label_;
-    ICluster *parent_;
+    ICluster *parent_=nullptr;
 
 public:
     Node(IdT id): id_(id) {}
@@ -22,10 +22,11 @@ public:
     void set_parent(ICluster *parent) override { 
         if (parent_) parent_->remove_node(this);
         parent_ = parent; 
+        if (parent) parent->nodes().push_back(this);
     }
 
-    const ICluster *parent() { return parent_; }
-    ICluster *parent() const { return parent_; }
+    const ICluster *parent() override { return parent_; }
+    ICluster *parent() const override { return parent_; }
 };
 
 } // namespace dot
