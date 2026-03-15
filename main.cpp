@@ -9,6 +9,7 @@
 #include "llvm/Support/FormatVariadic.h"
 
 #include "dot_builder.hpp"
+#include "graph_builder.hpp"
 
 using namespace llvm;
 
@@ -23,6 +24,8 @@ public:
         dot::DotBuilder dot_builder;
         ModuleSlotTracker MST(&M);
 
+        gb::GraphBuilder graph_builder;
+        
         if (auto err = build_dot_graph(M, MST, dot_builder)) {
             errs() << "Error building dot graph: " << toString(std::move(err)) << "\n";
             return PreservedAnalyses::all();

@@ -13,8 +13,6 @@ struct NodeProperties {
     std::string fontcolor = "#000000";   
     int fontsize = 14;                   
     int penwidth = 1;                    
-
-    NodeProperties() = default;
 };
 
 static inline const NodeProperties DEFAULT_INSTRNODE_PROPERTIES = 

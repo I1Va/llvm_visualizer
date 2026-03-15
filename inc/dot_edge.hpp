@@ -12,8 +12,6 @@ struct EdgeProperties {
     int penwidth = 1;                  
     int weight = 1;                    
     std::string constraint = "true";   
-
-    EdgeProperties() = default;
 };
 
 static inline const EdgeProperties DEFAULT_DATAEDGE_PROPERTIES = 

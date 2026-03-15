@@ -20,7 +20,7 @@ struct GraphProperties {
     double nodesep = 0.8;              
     double ranksep = 1.2;              
     std::string bgcolor = "#f8f9fa";   
-    std::string fontname = "Helvetica"; 
+    std::string fontname = ""; 
     int fontsize = 14;                 
 };
 

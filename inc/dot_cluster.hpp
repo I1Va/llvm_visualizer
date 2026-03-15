@@ -14,8 +14,6 @@ struct ClusterProperties {
     int penwidth = 2; 
     std::string fontcolor = "#000000";   
     int fontsize = 16;
-
-    ClusterProperties() = default;
 };
 
 static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES = 
