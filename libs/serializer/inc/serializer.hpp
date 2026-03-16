@@ -1,12 +1,12 @@
 #pragma once
 
 #include "graph_builder.hpp"
-#include "graph.pb.h" 
+#include "static_info.pb.h" 
 #include <fstream>
 
 namespace gb {
 
-class ProtobufSerializer {
+class GraphBuilderSerializer {
 public:
     static int Serialize(const GraphBuilder& builder, const std::string& filename) {
         gb_ser::Graph proto_graph;

@@ -7,6 +7,10 @@
 #include <vector>
 #include <cassert>
 #include <fstream>
+#include <fstream>
+#include <fcntl.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include "dynamic_info.pb.h"
 
 struct PairHash {
     template <class T1, class T2>
@@ -39,22 +43,36 @@ public:
         call_values[val_id] = value;
     }
 
-    void dump(char* path) const {
-        std::shared_lock lock(mutex_);
-        std::ofstream f(path);
-        if (!f.is_open()) return;
+    void dump(const char* path) const {
+        // 1. Snapshot the data under a shared lock
+        instrumentation::ExecutionData proto_data;
+        {
+            std::shared_lock lock(mutex_);
+            
+            // Serialize Basic Blocks
+            auto* bb_map = proto_data.mutable_bb_counts();
+            for (const auto& [id, count] : bb_counts) {
+                (*bb_map)[id] = count;
+            }
 
-        f << "--- Basic Blocks ---" << std::endl;
-        for (const auto& [id, count] : bb_counts) 
-            f << id << ":" << count << "\n";
+            // Serialize Call Edges
+            for (const auto& [edge, count] : edge_counts) {
+                auto* entry = proto_data.add_edge_counts();
+                entry->mutable_edge()->set_caller_id(edge.first);
+                entry->mutable_edge()->set_callee_id(edge.second);
+                entry->set_count(count);
+            }
 
-        f << "\n--- Call Edges ---\n";
-        for (const auto& [edge, count] : edge_counts) 
-            f << edge.first << "->" << edge.second << ":" << count << "\n";
+            auto* val_map = proto_data.mutable_call_values();
+            for (const auto& [id, val] : call_values) {
+                (*val_map)[id] = val;
+            }
+        }
 
-        f << "\n--- Call Values ---\n";
-        for (const auto& [id, val] : call_values) 
-            f << id << ":" << val << "\n";
+        std::ofstream output(path, std::ios::out | std::ios::binary | std::ios::trunc);
+        if (!proto_data.SerializeToOstream(&output)) {
+            std::cerr << "[LOG] Failed to write protobuf data." << std::endl;
+        }
     }
 };
 

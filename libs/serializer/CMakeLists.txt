@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(serializer LANGUAGES CXX)
 
-add_library(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/graph.proto)
+add_library(${PROJECT_NAME} 
+  ${CMAKE_CURRENT_SOURCE_DIR}/static_info.proto
+  ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_info.proto
+)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 find_package(Protobuf REQUIRED)
@@ -23,7 +27,7 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(serializer 
-    PRIVATE 
+    PUBLIC 
     protobuf::libprotobuf
     absl::log_internal_check_op
     absl::log_internal_message
@@ -35,5 +39,6 @@ protobuf_generate(
   PROTOC_OUT_DIR "${PROTO_GEN_DIR}"
   IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
   PROTOS
-    "${CMAKE_CURRENT_SOURCE_DIR}/graph.proto"
+    "${CMAKE_CURRENT_SOURCE_DIR}/static_info.proto"
+    "${CMAKE_CURRENT_SOURCE_DIR}/dynamic_info.proto"
 )

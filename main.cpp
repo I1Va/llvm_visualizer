@@ -207,7 +207,8 @@ private:
         }
 
         GOOGLE_PROTOBUF_VERIFY_VERSION;
-        if (gb::ProtobufSerializer::Serialize(graph_builder, "graph.bin") != 0) {
+        
+        if (gb::GraphBuilderSerializer::Serialize(graph_builder, "static_info.bin") != 0) {
             return llvm::make_error<llvm::StringError>(
                 "serialization failed", 
                 llvm::inconvertibleErrorCode()
