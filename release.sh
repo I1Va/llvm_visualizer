@@ -30,3 +30,7 @@ protoc --decode=instrumentation.ExecutionData \
        libs/serializer/dynamic_info.proto < info/dynamic_info.bin > info/dynamic_info.result
 
 protoc --decode=gb_ser.Graph libs/serializer/static_info.proto < info/static_info.bin > info/static_info.result   
+
+cd dot_builder
+./run.sh
+cd ..

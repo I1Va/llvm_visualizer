@@ -1,72 +1,89 @@
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <string>
-#include <map>
 
 #include "static_info.pb.h"
-#include "dynamic_info.pb.h"
+#include "dot_builder.hpp" 
 
-#include "graph_builder.hpp"
-
-void build_dot(const std::string& static_path, const std::string& dynamic_path) {
+void generate_static_dot(const std::string& static_bin_path, const std::string& out_dot_path) {
     gb_ser::Graph static_graph;
-    std::ifstream static_file(static_path, std::ios::binary);
+    std::ifstream static_file(static_bin_path, std::ios::binary);
+    
+    if (!static_file) {
+        throw std::runtime_error("Failed to open " + static_bin_path);
+    }
+    
     if (!static_graph.ParseFromIstream(&static_file)) {
-        throw std::runtime_error("Failed to parse static info");
+        throw std::runtime_error("Failed to parse protobuf data");
     }
 
-    instrumentation::ExecutionData dyn_data;
-    std::ifstream dyn_file(dynamic_path, std::ios::binary);
-    if (!dyn_data.ParseFromIstream(&dyn_file)) {
-        throw std::runtime_error("Failed to parse dynamic info");
+    dot::DotBuilder builder;
+
+    for (const auto& pb_cluster : static_graph.clusters()) {
+        builder.create_cluster<dot::BBCluster>(pb_cluster.id(), pb_cluster.label()); // FIX, add FClusters
     }
 
-    std::map<uint64_t, uint64_t> counts = {dyn_data.bb_counts().begin(), dyn_data.bb_counts().end()};
-
-    std::cout << "digraph G {\n";
-    std::cout << "  node [shape=box, style=filled, fontname=\"Courier\"];\n";
-
-    for (const auto& cluster : static_graph.clusters()) {
-        std::cout << "  subgraph cluster_" << cluster.id() << " {\n";
-        std::cout << "    label = \"" << cluster.label() << "\";\n";
-        std::cout << "    color = blue;\n";
-        
-        for (uint64_t node_id : cluster.child_node_ids()) {
-            std::cout << "    node_" << node_id << ";\n";
+    for (const auto& pb_cluster : static_graph.clusters()) {
+        if (pb_cluster.parent_id() != 0) {
+            dot::ICluster* cluster = builder.get_cluster_by_id(pb_cluster.id());
+            dot::ICluster* parent = builder.get_cluster_by_id(pb_cluster.parent_id());
+            if (cluster && parent) {
+                cluster->set_parent(parent);
+            }
         }
-        std::cout << "  }\n";
     }
 
-    for (const auto& node : static_graph.nodes()) {
-        uint64_t exec_count = counts.count(node.id()) ? counts.at(node.id()) : 0;
-        
-        std::string color = (exec_count > 0) ? "lightyellow" : "gray90";
-        if (exec_count > 100) color = "orange";
-        if (exec_count > 1000) color = "indianred1";
+    // for (const auto& pb_node : static_graph.nodes()) {
+    //     if (pb_node.parent_id() != 0) {
+    //         dot::ICluster* parent_cluster = builder.get_cluster_by_id(pb_node.parent_id());
+    //         if (parent_cluster) {
+    //             builder.create_node_in_cluster<dot::InstrNode>(pb_node.id(), *parent_cluster, pb_node.label());
+    //         } else {
+    //             builder.create_node<dot::InstrNode>(pb_node.id(), pb_node.label());
+    //         }
+    //     } else {
+    //         builder.create_node<dot::InstrNode>(pb_node.id(), pb_node.label());
+    //     }
+    // }
 
-        std::cout << "  node_" << node.id() << " [label=\"" << node.label() 
-                  << "\\nHits: " << exec_count << "\", fillcolor=" << color << "];\n";
+    // for (const auto& pb_edge : static_graph.edges()) {
+    //     dot::INode* left_node = builder.get_node_by_id(pb_edge.left_id());
+    //     dot::INode* right_node = builder.get_node_by_id(pb_edge.right_id());
+    //     dot::ICluster* left_cluster = builder.get_cluster_by_id(pb_edge.left_id());
+    //     dot::ICluster* right_cluster = builder.get_cluster_by_id(pb_edge.right_id());
+
+    //     if (left_node && right_node) {
+    //         builder.create_edge<dot::FlowEdge>(*left_node, *right_node, pb_edge.label());
+    //     } else if (left_node && right_cluster) {
+    //         builder.create_edge<dot::FlowEdge>(*left_node, *right_cluster, pb_edge.label());
+    //     } else if (left_cluster && right_node) {
+    //         builder.create_edge<dot::FlowEdge>(*left_cluster, *right_node, pb_edge.label());
+    //     } else if (left_cluster && right_cluster) {
+    //         builder.create_edge<dot::FlowEdge>(*left_cluster, *right_cluster, pb_edge.label());
+    //     }
+    // }
+
+    std::ofstream out_file(out_dot_path);
+    if (!out_file) {
+        throw std::runtime_error("Failed to create " + out_dot_path);
     }
-
-    for (const auto& edge : static_graph.edges()) {
-        std::cout << "  node_" << edge.left_id() << " -> node_" << edge.right_id() 
-                  << " [label=\"" << edge.label() << "\"];\n";
-    }
-
-    std::cout << "}\n";
+    
+    builder.serialize_dot(out_file);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
     if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <static.bin> <dynamic.bin>\n";
+        std::cerr << "Usage: " << argv[0] << " <static_info.bin> <output.dot>\n";
         return 1;
     }
 
     try {
-        build_dot(argv[1], argv[2]);
+        generate_static_dot(argv[1], "graph.dot");
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
+
     return 0;
 }

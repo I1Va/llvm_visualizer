@@ -77,6 +77,10 @@ public:
         }
     
         insert_dynamic_info_dump(M, DYNAMIC_INFO_PATH);
+
+        if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
+            errs() << "serialization failed\n";
+        }
         
         return PreservedAnalyses::all();
     }
@@ -198,13 +202,6 @@ private:
                 callee_cl->label() = callee->getName().str();
                 graph_builder.create_edge<CallEdge>(*i_node, *callee_cl);
             }
-        }
-
-        if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
-            return llvm::make_error<llvm::StringError>(
-                "serialization failed", 
-                llvm::inconvertibleErrorCode()
-            );
         }
 
         return Error::success();
