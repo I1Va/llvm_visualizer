@@ -4,7 +4,11 @@ cmake -B build -S . -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS
 cmake --build build
 
 program_name="fact"
+optimization="-O0"
 clang++ -std=c++17 -c src/logger.cpp -o logger.o -fPIC
 
 # clang++ -std=c++17 -fpass-plugin=./build/libllvm_visualizer_pass.so c_examples/${program_name}.cpp logger.o -O2 -emit-llvm -S -o c_examples/${program_name}.ll
-clang++ -std=c++17 -fpass-plugin=./build/libllvm_visualizer_pass.so c_examples/${program_name}.cpp logger.o -O2 -o c_examples/${program_name}.out
+# clang++ -std=c++17 -fpass-plugin=./build/libllvm_visualizer_pass.so c_examples/${program_name}.cpp logger.o ${optimization} -o c_examples/${program_name}.out
+
+clang++ -std=c++17 -fpass-plugin=./build/libllvm_visualizer_pass.so c_examples/${program_name}.cpp logger.o ${optimization} -emit-llvm -S
+

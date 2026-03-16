@@ -1,24 +1,18 @@
 #include <iostream>
 #include <cstdint>
 
-extern "C" void basic_block_start_logger(long int id) {
+extern "C" void basic_block_start_logger(uint64_t id) {
   printf("[LOG] start basic block '%ld'\n", id);
 }
 
-void callLogger(char *callerName, char *calleeName, long int valID) {
-  printf("[LOG] CALL '%s' -> '%s' {%ld}\n", callerName, calleeName, valID);
+extern "C" void call_logger(uint64_t caller_id, uint64_t callee_id) {
+  printf("[LOG] CALL '%ld' -> '%ld'\n", caller_id, callee_id);
 }
 
-void resIntLogger(long int res, long int valID) {
-  printf("[LOG] Result %ld {%ld}\n", res, valID);
+extern "C" void res_int_logger(int64_t res, uint64_t val_id) {
+  printf("[LOG] Result %ld {%ld}\n", res, val_id);
 }
 
-void funcEndLogger(char *funcName, long int valID) {
-  printf("[LOG] End function '%s' {%ld}\n", funcName, valID);
-}
-
-void binOptLogger(int val, int arg0, int arg1, char *opName, char *funcName,
-                  long int valID) {
-  printf("[LOG] In function '%s': %d = %d %s %d {%ld}\n", funcName, val, arg0,
-         opName, arg1, valID);
+extern "C" void dump_dynamic_logger_info(char *dump_path) {
+  printf("[LOG] dump into `%s`\n", dump_path);
 }

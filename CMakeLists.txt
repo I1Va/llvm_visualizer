@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(libs/graph_builder)
 add_subdirectory(libs/serializer)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 add_library(${PROJECT_NAME} SHARED
     main.cpp
 )

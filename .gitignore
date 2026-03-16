@@ -5,6 +5,7 @@ build/
 *.png
 *.dot
 *.out
+*.bin
 
 notes/
 
