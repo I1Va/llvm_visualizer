@@ -2,7 +2,10 @@
 
 static DynamicInfo *getGInfo(bool delete_info=false) {
     static DynamicInfo* instance = new DynamicInfo();
-    if (delete_info) instance = nullptr;
+    if (delete_info) {
+        delete instance;
+        instance = nullptr;
+    }
     return instance;
 }
 

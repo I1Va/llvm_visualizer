@@ -1,15 +1,7 @@
 build/
 .vscode/
 
-*.so
-*.png
-*.dot
-*.out
-*.bin
-*.ll
-*.result
-
 notes/
+info/
 
-graph.bin
-logger.o
+*.out

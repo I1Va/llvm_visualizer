@@ -1,14 +1,17 @@
 #pragma once
 
+#include <google/protobuf/stubs/common.h>
+#include <fstream>
+
 #include "graph_builder.hpp"
 #include "static_info.pb.h"
-#include <fstream>
 
 namespace proto {
 
 class GraphSerializer {
 public:
     static int Serialize(const gb::GraphBuilder& builder, const std::string& filename) {
+        GOOGLE_PROTOBUF_VERIFY_VERSION;
         gb_ser::Graph proto_graph;
 
         for (const auto& [id, node_ptr] : builder.nodes()) {

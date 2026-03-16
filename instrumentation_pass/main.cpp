@@ -1,32 +1,28 @@
-#include "llvm/IR/Module.h"
-#include "llvm/Passes/PassBuilder.h"
-#include "llvm/Passes/PassPlugin.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/IR/ModuleSlotTracker.h"
-#include "llvm/Support/Error.h"
-#include "llvm/Support/FormatVariadic.h"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Passes/PassBuilder.h"
 
-#include "dot_builder.hpp"
-#include "graph_builder.hpp"
-#include <iostream>
-#include <fstream>
-#include <google/protobuf/stubs/common.h>
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
+
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/raw_ostream.h"
+
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+
+#include "graph_builder.hpp"
 #include "graph_serializer.hpp"
 
-
 using namespace llvm;
-
-#include <iostream>
-#include <string>
-#include <sstream>
 
 using InstrNode = gb::Node;
 using ValueNode = gb::Node;
@@ -37,6 +33,9 @@ using DataEdge  = gb::Edge;
 using CallEdge  = gb::Edge;
 
 class MyModPass : public PassInfoMixin<MyModPass> {
+    const std::string STATIC_INFO_PATH = "info/static_info.bin"; 
+    const std::string DYNAMIC_INFO_PATH = "info/dynamic_info.bin";
+ 
     Type *voidTy;
     Type *int8PtrTy;
     Type *int32Ty;
@@ -75,14 +74,9 @@ public:
                     }
                 }
             }
-
-            outs() << '\n';
-            bool verif = verifyFunction(F, &outs());
-            outs() << "[VERIFICATION] " << (verif ? "FAIL\n\n" : "OK\n\n");
         }
     
-        std::string dynamic_info_path = "dynamic_info.bin";
-        insert_dynamic_info_dump(M, dynamic_info_path);
+        insert_dynamic_info_dump(M, DYNAMIC_INFO_PATH);
         
         return PreservedAnalyses::all();
     }
@@ -147,7 +141,7 @@ private:
         }
     }
 
-    void insert_dynamic_info_dump(Module &M, std::string &dump_file_path) {
+    void insert_dynamic_info_dump(Module &M, const std::string &dump_file_path) {
         LLVMContext &Ctx = M.getContext();
     
         Value *pathConst = IRBuilder<>(Ctx).CreateGlobalString(dump_file_path, "dump_dynamic_logger_info_path", 0, &M);
@@ -206,9 +200,7 @@ private:
             }
         }
 
-        GOOGLE_PROTOBUF_VERIFY_VERSION;
-        
-        if (proto::GraphSerializer::Serialize(graph_builder, "static_info.bin") != 0) {
+        if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
             return llvm::make_error<llvm::StringError>(
                 "serialization failed", 
                 llvm::inconvertibleErrorCode()

@@ -1,14 +1,18 @@
 #pragma once
 
+#include <fstream>
+#include <google/protobuf/stubs/common.h>
+
 #include "dynamic_info.hpp"
 #include "dynamic_info.pb.h" 
-#include <fstream>
+
 
 namespace proto {
 
 class DynInfoSerializer {
 public:
     static int Serialize(const DynamicInfo &info, const std::string& filename) {
+        GOOGLE_PROTOBUF_VERIFY_VERSION;
         instrumentation::ExecutionData proto_data;
         {            
             auto* bb_map = proto_data.mutable_bb_counts();
