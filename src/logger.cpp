@@ -1,80 +1,4 @@
-#include <iostream>
-#include <cstdint>
-#include <map>
-#include <unordered_map>
-#include <mutex>
-#include <shared_mutex>
-#include <vector>
-#include <cassert>
-#include <fstream>
-#include <fstream>
-#include <fcntl.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include "dynamic_info.pb.h"
-
-struct PairHash {
-    template <class T1, class T2>
-    std::size_t operator()(const std::pair<T1, T2>& p) const {
-        return std::hash<T1>{}(p.first) ^ (std::hash<T2>{}(p.second) << 1);
-    }
-};
-
-class DynamicInfo {
-private:
-    mutable std::shared_mutex mutex_;
-
-    std::unordered_map<uint64_t, uint64_t> bb_counts;
-    std::unordered_map<std::pair<uint64_t, uint64_t>, uint64_t, PairHash> edge_counts;
-    std::unordered_map<uint64_t, int64_t> call_values;
-
-public:
-    void logBasicBlock(uint64_t id) {
-        std::unique_lock lock(mutex_);
-        bb_counts[id]++;
-    }
-
-    void logCallEdge(uint64_t caller_id, uint64_t callee_id) {
-        std::unique_lock lock(mutex_);
-        edge_counts[{caller_id, callee_id}]++;
-    }
-
-    void logResult(uint64_t val_id, int64_t value) {
-        std::unique_lock lock(mutex_);
-        call_values[val_id] = value;
-    }
-
-    void dump(const char* path) const {
-        // 1. Snapshot the data under a shared lock
-        instrumentation::ExecutionData proto_data;
-        {
-            std::shared_lock lock(mutex_);
-            
-            // Serialize Basic Blocks
-            auto* bb_map = proto_data.mutable_bb_counts();
-            for (const auto& [id, count] : bb_counts) {
-                (*bb_map)[id] = count;
-            }
-
-            // Serialize Call Edges
-            for (const auto& [edge, count] : edge_counts) {
-                auto* entry = proto_data.add_edge_counts();
-                entry->mutable_edge()->set_caller_id(edge.first);
-                entry->mutable_edge()->set_callee_id(edge.second);
-                entry->set_count(count);
-            }
-
-            auto* val_map = proto_data.mutable_call_values();
-            for (const auto& [id, val] : call_values) {
-                (*val_map)[id] = val;
-            }
-        }
-
-        std::ofstream output(path, std::ios::out | std::ios::binary | std::ios::trunc);
-        if (!proto_data.SerializeToOstream(&output)) {
-            std::cerr << "[LOG] Failed to write protobuf data." << std::endl;
-        }
-    }
-};
+#include "dyn_info_serializer.hpp"
 
 static DynamicInfo *getGInfo(bool delete_info=false) {
     static DynamicInfo* instance = new DynamicInfo();
@@ -99,6 +23,6 @@ extern "C" void res_int_logger(int64_t res, uint64_t val_id) {
 
 extern "C" void dump_dynamic_logger_info(char *dump_path) {
     DynamicInfo *info = getGInfo();
-    if (info) info->dump(dump_path);
+    if (info) proto::DynInfoSerializer::Serialize(*info, dump_path);
     getGInfo(/*delete*/true);
 }

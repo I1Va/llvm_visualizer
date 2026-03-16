@@ -19,7 +19,7 @@
 #include <fstream>
 #include <google/protobuf/stubs/common.h>
 #include "llvm/Transforms/Utils/ModuleUtils.h"
-#include "serializer.hpp"
+#include "graph_serializer.hpp"
 
 
 using namespace llvm;
@@ -208,7 +208,7 @@ private:
 
         GOOGLE_PROTOBUF_VERIFY_VERSION;
         
-        if (gb::GraphBuilderSerializer::Serialize(graph_builder, "static_info.bin") != 0) {
+        if (proto::GraphSerializer::Serialize(graph_builder, "static_info.bin") != 0) {
             return llvm::make_error<llvm::StringError>(
                 "serialization failed", 
                 llvm::inconvertibleErrorCode()

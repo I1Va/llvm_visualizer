@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(libs/graph_builder)
 add_subdirectory(libs/serializer)
+add_subdirectory(libs/dynamic_info)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
@@ -46,4 +47,5 @@ target_include_directories(logger_obj
 
 target_link_libraries(logger_obj PRIVATE 
     serializer
+    dynamic_info
 )

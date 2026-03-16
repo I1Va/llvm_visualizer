@@ -21,7 +21,6 @@ file(MAKE_DIRECTORY "${PROTO_GEN_DIR}")
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../graph_builder/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
     ${PROTO_GEN_DIR}
 )
@@ -29,6 +28,8 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(serializer 
     PUBLIC 
     protobuf::libprotobuf
+    graph_builder
+    dynamic_info
     absl::log_internal_check_op
     absl::log_internal_message
 )
