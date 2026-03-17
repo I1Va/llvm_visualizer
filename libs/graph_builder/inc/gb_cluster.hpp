@@ -11,6 +11,7 @@ namespace gb
 class Cluster : public ICluster {
 protected:
     IdT id_;
+    uint64_t type_;
     std::string label_;
     
     ICluster *parent_=nullptr;
@@ -19,9 +20,10 @@ protected:
     std::vector<ICluster *> clusters_;
 
 public:
-    Cluster(IdT cluster_id): id_(cluster_id) {}
+    Cluster(IdT cluster_id, uint64_t type): id_(cluster_id), type_(type) {}
     
     IdT id() const override { return id_; }
+    uint64_t type() const override { return type_; }
     const std::string &label() const override { return label_; }
     std::string &label() override { return label_; }
 

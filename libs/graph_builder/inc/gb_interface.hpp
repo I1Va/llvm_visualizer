@@ -15,6 +15,7 @@ class ICluster;
 class INode {
 public:
     virtual IdT id() const = 0;
+    virtual uint64_t type() const = 0;
     virtual const std::string &label() const = 0;
     virtual std::string &label() = 0;
 
@@ -28,6 +29,7 @@ public:
 class ICluster {
 public:
     virtual IdT id() const = 0;
+    virtual uint64_t type() const = 0;
     virtual const std::string &label() const = 0;
     virtual std::string &label() = 0;
 
@@ -50,6 +52,7 @@ public:
 class IEdge {
 public:
     virtual std::pair<IdT, IdT> id() const = 0;
+    virtual uint64_t type() const = 0;
     virtual const std::string &label() const = 0;
     virtual std::string &label() = 0;
     virtual ~IEdge() = default;

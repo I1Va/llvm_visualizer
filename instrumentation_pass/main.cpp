@@ -21,16 +21,9 @@
 
 #include "graph_builder.hpp"
 #include "graph_serializer.hpp"
+#include "gb_llvm_types.hpp"
 
 using namespace llvm;
-
-using InstrNode = gb::Node;
-using ValueNode = gb::Node;
-using FCluster  = gb::Cluster;
-using BBCluster = gb::Cluster;
-using FlowEdge  = gb::Edge;
-using DataEdge  = gb::Edge;
-using CallEdge  = gb::Edge;
 
 class MyModPass : public PassInfoMixin<MyModPass> {
     const std::string STATIC_INFO_PATH = "info/static_info.bin"; 
@@ -43,28 +36,48 @@ class MyModPass : public PassInfoMixin<MyModPass> {
 
 public:
     PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM) {
-        gb::GraphBuilder graph_builder;
         ModuleSlotTracker MST(&M);
         LLVMContext &Ctx = M.getContext();
         IRBuilder<> builder(Ctx);
+        gb::GraphBuilder graph_builder;
 
         voidTy = Type::getVoidTy(Ctx);
         int8PtrTy = PointerType::get(Ctx, 0);
         int32Ty = Type::getInt32Ty(Ctx);
         int64Ty = Type::getInt64Ty(Ctx);
+    
+        gather_static_info(M, MST, graph_builder);
+        perform_instrumentation(M, builder);
+        
+        if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
+            errs() << "serialization failed\n";
+        }
+        
+        return PreservedAnalyses::all();
+    }
 
-        for (auto &F : M) {
+private:
+    void perform_instrumentation(Module &M, IRBuilder<> &builder) {
+         for (auto &F : M) {
+            if (F.isDeclaration()) continue;
+            insert_call_log(M, F, builder); 
+            for (auto &BB : F) {
+                insert_basic_block_start_log(M, BB, builder);
+            }
+        }
+        insert_dynamic_info_dump(M, DYNAMIC_INFO_PATH);
+    }
+
+    void gather_static_info(Module &M, ModuleSlotTracker &MST, gb::GraphBuilder &graph_builder) {
+         for (auto &F : M) {
             if (F.isDeclaration()) continue;
             MST.incorporateFunction(F);
-            insert_call_log(M, F, builder); 
-           
-
-            auto* f_cl = graph_builder.create_cluster<FCluster>((gb::IdT)&F);
+        
+            auto* f_cl = graph_builder.create_cluster<gb::ClusterTypes::F>((gb::IdT)&F);
             f_cl->label() = F.getName().str();
 
             for (auto &BB : F) {
-                insert_basic_block_start_log(M, BB, builder);
-                auto* bb_cl = graph_builder.create_cluster<BBCluster>((gb::IdT)&BB);
+                auto* bb_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT)&BB);
                 bb_cl->label() = BB.getName().str();
                 bb_cl->set_parent(f_cl); 
 
@@ -75,17 +88,8 @@ public:
                 }
             }
         }
-    
-        insert_dynamic_info_dump(M, DYNAMIC_INFO_PATH);
-
-        if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
-            errs() << "serialization failed\n";
-        }
-        
-        return PreservedAnalyses::all();
     }
 
-private:
     void insert_basic_block_start_log(Module &M, BasicBlock &B, IRBuilder<> &builder) {
         FunctionType *bb_start_func_type =
             FunctionType::get(voidTy, {int64Ty}, false);
@@ -164,43 +168,43 @@ private:
         appendToGlobalDtors(M, wrapperFn, 0);
     }
     
-    Error build_instruction_nodes(Instruction &I, BBCluster &bb_cl, FCluster &f_cl, 
+    Error build_instruction_nodes(Instruction &I, gb::ICluster &bb_cl, gb::ICluster &f_cl, 
                                     gb::GraphBuilder &graph_builder, ModuleSlotTracker &MST) {
             
-        auto* i_node = graph_builder.create_node<InstrNode>((gb::IdT)&I);
+        auto* i_node = graph_builder.create_node<gb::NodeTypes::Instr>((gb::IdT)&I);
         i_node->label() = I.getOpcodeName();
         i_node->set_parent(&bb_cl);
 
         if (auto* prev = I.getPrevNode()) {
             if (auto* prev_node = graph_builder.get_node((gb::IdT)prev)) {
-                graph_builder.create_edge<FlowEdge>(*prev_node, *i_node);
+                graph_builder.create_edge<gb::EdgeTypes::Flow>(*prev_node, *i_node);
             }
         }
 
         for (auto &U : I.operands()) {
             if (auto* target_bb = dyn_cast<BasicBlock>(U.get())) {
-                auto* target_cl = graph_builder.create_cluster<BBCluster>((gb::IdT)target_bb);
-                graph_builder.create_edge<FlowEdge>(*i_node, *target_cl);
+                auto* target_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT)target_bb);
+                graph_builder.create_edge<gb::EdgeTypes::Flow>(*i_node, *target_cl);
             }
         }
 
         for (auto &U : I.operands()) {
             Value* val = U.get();
             if (val && !isa<BasicBlock>(val)) {
-                auto* v_node = graph_builder.create_node<ValueNode>((gb::IdT)val);
+                auto* v_node = graph_builder.create_node<gb::NodeTypes::Value>((gb::IdT)val);
                 if (v_node->label().empty()) {
                     v_node->label() = get_value_str(*val, MST);
                     v_node->set_parent(&bb_cl);
                 }
-                graph_builder.create_edge<DataEdge>(*v_node, *i_node);
+                graph_builder.create_edge<gb::EdgeTypes::Data>(*v_node, *i_node);
             }
         }
 
         if (auto* cb = dyn_cast<CallBase>(&I)) {
             if (auto* callee = cb->getCalledFunction()) {
-                auto* callee_cl = graph_builder.create_cluster<FCluster>((gb::IdT)callee);
+                auto* callee_cl = graph_builder.create_cluster<gb::ClusterTypes::F>((gb::IdT)callee);
                 callee_cl->label() = callee->getName().str();
-                graph_builder.create_edge<CallEdge>(*i_node, *callee_cl);
+                graph_builder.create_edge<gb::EdgeTypes::Call>(*i_node, *callee_cl);
             }
         }
 

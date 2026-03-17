@@ -36,67 +36,62 @@ public:
 
 
 private:
-    template <typename EdgeT>
-    EdgeT* create_edge_impl(const IdT left, const IdT right) {
+    template <uint64_t EdgeT>
+    IEdge* create_edge_impl(const IdT left, const IdT right) {
         const std::pair<IdT, IdT> id(left, right);
         auto it = edges_.find(id);
         if (it != edges_.end()) {
-            return static_cast<EdgeT*>(it->second.get());
+            return it->second.get();
         }
     
-        auto edge = std::make_unique<EdgeT>(left, right);
-        EdgeT* edge_ptr = edge.get();
+        auto edge = std::make_unique<Edge>(left, right, EdgeT);
+        IEdge* edge_ptr = edge.get();
         edges_.emplace(edge->id(), std::move(edge));
         return edge_ptr;
     }
 public:
-    template <typename EdgeT>
-    EdgeT* create_edge(INode& left, INode& right) {
+    template <uint64_t EdgeT>
+    IEdge* create_edge(INode& left, INode& right) {
         return create_edge_impl<EdgeT>(left.id(), right.id());
     }
 
-    template <typename EdgeT>
-    EdgeT* create_edge(ICluster& left, INode& right) {
+    template <uint64_t EdgeT>
+    IEdge* create_edge(ICluster& left, INode& right) {
         return create_edge_impl<EdgeT>(left.id(), right.id());
     }
-    template <typename EdgeT>
-    EdgeT* create_edge(INode& left, ICluster& right) {
+    template <uint64_t EdgeT>
+    IEdge* create_edge(INode& left, ICluster& right) {
         return create_edge_impl<EdgeT>(left.id(), right.id());
     }
-    template <typename EdgeT>
-    EdgeT* create_edge(ICluster& left, ICluster& right) {
+    template <uint64_t EdgeT>
+    IEdge* create_edge(ICluster& left, ICluster& right) {
         return create_edge_impl<EdgeT>(left.id(), right.id());
     }
 
     GraphBuilder() = default;
 
-    template <typename ClusterT>
-    ClusterT* create_cluster(IdT id) {
-        static_assert(std::is_base_of<ICluster, ClusterT>::value, "ClusterT must derive from ICluster");
-
+    template <uint64_t ClusterT>
+    ICluster* create_cluster(IdT id) {
         auto it = clusters_.find(id);
         if (it != clusters_.end()) {
-            return static_cast<ClusterT*>(it->second.get());
+            return it->second.get();
         }
 
-        auto cluster = std::make_unique<ClusterT>(id);
-        ClusterT* cluster_ptr = cluster.get();
+        auto cluster = std::make_unique<Cluster>(id, ClusterT);
+        ICluster* cluster_ptr = cluster.get();
         clusters_.emplace(id, std::move(cluster));
         return cluster_ptr;
     }
 
-    template <typename NodeT>
-    NodeT* create_node(IdT id) {
-        static_assert(std::is_base_of<INode, NodeT>::value,
-                      "NodeT must derive from INode");
-               
+    template <uint64_t NodeT>
+    INode* create_node(IdT id) {
         auto it = nodes_.find(id);
         if (it != nodes_.end()) {
-            return static_cast<NodeT*>(it->second.get());
+            return it->second.get();
         }
     
-        auto node = std::make_unique<NodeT>(id);
-        NodeT* node_ptr = node.get();
+        auto node = std::make_unique<Node>(id, NodeT);
+        INode* node_ptr = node.get();
         nodes_.emplace(id, std::move(node));
         return node_ptr;
     }
