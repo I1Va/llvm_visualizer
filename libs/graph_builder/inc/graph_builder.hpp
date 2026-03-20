@@ -34,7 +34,6 @@ public:
     std::map<IdT, std::unique_ptr<ICluster>>                    &clusters() { return clusters_; };
     std::map<std::pair<IdT, IdT>, std::unique_ptr<IEdge>>       &edges() { return edges_; };
 
-
 private:
     template <uint64_t EdgeT>
     IEdge* create_edge_impl(const IdT left, const IdT right) {
@@ -50,6 +49,16 @@ private:
         return edge_ptr;
     }
 public:
+    template <uint64_t EdgeT>
+    IEdge* create_edge(std::pair<IdT, IdT> id) {
+        return create_edge_impl<EdgeT>(id.first, id.second);
+    }
+
+    template <uint64_t EdgeT>
+    IEdge* create_edge(IdT left, IdT right) {
+        return create_edge_impl<EdgeT>(left, right);
+    }
+
     template <uint64_t EdgeT>
     IEdge* create_edge(INode& left, INode& right) {
         return create_edge_impl<EdgeT>(left.id(), right.id());
@@ -111,4 +120,4 @@ public:
     }
 };
 
-} // namespace dot
+} // namespace gb

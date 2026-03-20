@@ -63,4 +63,4 @@ public:
 
 };
 
-} // namespace dot
+} // namespace gb

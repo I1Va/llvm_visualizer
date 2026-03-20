@@ -5,6 +5,7 @@
 namespace gb
 {
 
+
 class Edge : public IEdge { 
 protected:
     IdT left_, right_;
@@ -19,7 +20,6 @@ public:
     uint64_t type() const override { return type_; }
     const std::string &label() const override { return label_; }
     std::string &label() override { return label_; }
- 
 };
 
-} // namespace dot
+} // namespace gb

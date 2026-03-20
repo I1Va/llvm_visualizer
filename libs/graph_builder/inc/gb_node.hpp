@@ -30,4 +30,4 @@ public:
     ICluster *parent() const override { return parent_; }
 };
 
-} // namespace dot
+} // namespace gb

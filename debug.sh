@@ -1,7 +1,7 @@
 #!/bin/bash
 cd instrumentation_pass
 
-cmake -B build -S . -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release 
+cmake -B build -S . -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug 
 cmake --build build
 
 cd ..
@@ -36,5 +36,5 @@ protoc --decode=instrumentation.ExecutionData \
 protoc --decode=gb_ser.Graph libs/serializer/static_info.proto < info/static_info.bin > info/static_info.result   
 
 cd dot_builder
-./release.sh
+./debug.sh
 cd ..

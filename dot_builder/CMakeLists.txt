@@ -9,7 +9,10 @@ add_subdirectory(./../libs/serializer    ${CMAKE_CURRENT_BINARY_DIR}/serializer)
 add_subdirectory(./../libs/dynamic_info  ${CMAKE_CURRENT_BINARY_DIR}/dynamic_info)
 
 add_executable(${PROJECT_NAME}
-    main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster_dump.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/node_dump.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/edge_dump.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

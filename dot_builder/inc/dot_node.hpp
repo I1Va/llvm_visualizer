@@ -1,85 +1,49 @@
 #pragma once
+#include <string>
+#include <iostream>
+#include "gb_node.hpp"
 
-#include "dot_interface.hpp"
-
-namespace dot 
+namespace dot
 {
 
-struct NodeProperties {
-    std::string color = "#000000";      
-    std::string shape = "rect";          
-    std::string fillcolor = "#ffffff";   
-    std::string style = "filled,rounded";
-    std::string fontcolor = "#000000";   
-    int fontsize = 14;                   
-    int penwidth = 1;                    
-};
+class DotGraph;
 
-static inline const NodeProperties DEFAULT_INSTRNODE_PROPERTIES = 
-{
-    .color = "#d62728",          
-    .shape = "rect",
-    .fillcolor = "#f8d7da",      
-    .style = "filled,rounded",
-    .fontcolor = "#800000",      
-    .fontsize = 14,
-    .penwidth = 2
-};
-
-static inline const NodeProperties DEFAULT_VALUENODE_PROPERTIES = 
-{
-    .color = "#ff7f0e",         
-    .shape = "rect",
-    .fillcolor = "#ffe6cc",     
-    .style = "filled,rounded",
-    .fontcolor = "#803d00",     
-    .fontsize = 14,
-    .penwidth = 2
-};
-
-class Node : public INode {
-protected:
-    DotId id_;
-    std::string label_;
-
-    NodeProperties properties_;
-
+class Node {
 public:
-    Node(DotId id, const std::string& label):
-        id_(id), label_(label) {}
-    DotId id() const override { return id_; }
-    std::string_view label() const override { return label_; }
+    struct Properties {
+        std::string color = "#000000";      
+        std::string shape = "rect";          
+        std::string fillcolor = "#ffffff";   
+        std::string style = "filled,rounded";
+        std::string fontcolor = "#000000";   
+        int fontsize = 14;                   
+        int penwidth = 1;                    
 
-    const NodeProperties& properties() const override { return properties_; }
-    NodeProperties& properties() override { return properties_; }
-   
-    void print(std::ostream &stream, const size_t indent) const override {
-        const std::string indent_string(indent, ' ');
-        stream << indent_string << "n" << id_;
-        stream << " [";
-        stream << "label=\""        << label_                   << "\" ";
-        stream << "color=\""        << properties_.color        << "\" "; 
-        stream << "shape=\""        << properties_.shape        << "\" ";
-        stream << "fillcolor=\""    << properties_.fillcolor    << "\" ";
-        stream << "style=\""        << properties_.style        << "\" ";
-        stream << "fontcolor=\""    << properties_.fontcolor    << "\" ";
-        stream << "fontsize=\""     << properties_.fontsize     << "\" ";
-        stream << "penwidth=\""     << properties_.penwidth     << "\"";
-        stream << "];\n";
+        Properties() = default;
+    };    
+private:
+    gb::INode *underlying_;
+    DotGraph *graph_;
+    Properties properties_;
+public:
+    explicit Node(gb::INode *node, DotGraph *graph): underlying_(node), graph_(graph) {
+        if (!node) throw std::invalid_argument("Cannot wrap a null INode.");
+        if (!graph) throw std::invalid_argument("Nullptr DotGraph ptr passed."); 
     }
-};
 
-class InstrNode final : public Node {
-public:
-    InstrNode(DotId id, const std::string& label): Node(id, label) {
-        properties_ = DEFAULT_INSTRNODE_PROPERTIES;
-    }
-};
+    gb::IdT id() const { return underlying_->id(); }
+    uint64_t type() const { return underlying_->type(); }
+    
+    const std::string& label() const { return underlying_->label(); }
+    std::string& label() { return underlying_->label(); }
 
-class ValueNode final : public Node {
-public:
-    ValueNode(DotId id, const std::string& label): Node(id, label) {
-        properties_ = DEFAULT_VALUENODE_PROPERTIES;
+    void set_parent(gb::ICluster* parent) { underlying_->set_parent(parent); }
+    const gb::ICluster* parent() { return underlying_->parent(); } 
+
+    void print(std::ostream &stream, const size_t indent) const;
+
+    static std::string get_str_identifier(gb::IdT id) {
+        return "n" + std::to_string(id);
     }
 };
 

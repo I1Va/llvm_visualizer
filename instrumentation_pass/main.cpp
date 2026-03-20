@@ -88,6 +88,20 @@ private:
                 }
             }
         }
+
+        for (auto &F : M) {
+            for (auto &BB : F) {
+                auto* bb_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT)&BB);
+                for (gb::INode *node : bb_cl->nodes()) {
+                    std::cout << node->label() << " ";
+                }
+                std::cout << "\n";
+            }
+        }
+
+        
+
+
     }
 
     void insert_basic_block_start_log(Module &M, BasicBlock &B, IRBuilder<> &builder) {
@@ -131,7 +145,6 @@ private:
                         if (!call->getType()->isVoidTy()) {
                             builder.SetInsertPoint(call->getNextNode());
                                 
-
                             Value *CastVal = nullptr;
                             if (call->getType()->isIntegerTy()) {
                                 CastVal = builder.CreateIntCast(call, int64Ty, true); 
@@ -184,21 +197,28 @@ private:
         for (auto &U : I.operands()) {
             if (auto* target_bb = dyn_cast<BasicBlock>(U.get())) {
                 auto* target_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT)target_bb);
+                target_cl->set_parent(&f_cl);
                 graph_builder.create_edge<gb::EdgeTypes::Flow>(*i_node, *target_cl);
             }
         }
 
-        for (auto &U : I.operands()) {
-            Value* val = U.get();
-            if (val && !isa<BasicBlock>(val)) {
-                auto* v_node = graph_builder.create_node<gb::NodeTypes::Value>((gb::IdT)val);
-                if (v_node->label().empty()) {
-                    v_node->label() = get_value_str(*val, MST);
-                    v_node->set_parent(&bb_cl);
-                }
-                graph_builder.create_edge<gb::EdgeTypes::Data>(*v_node, *i_node);
-            }
-        }
+        // for (auto &U : I.operands()) {
+        //     Value* val = U.get();
+        //     std::cout << get_value_str(*val, MST) << ", instr : " << (gb::IdT)&I << ", val id : " << (gb::IdT)val << "\n";
+        //     if (val && !isa<BasicBlock>(val) && !isa<Function>(val)) {
+        //         gb::INode *op_node = nullptr;
+        //         if (isa<Constant>(val)) {
+        //             op_node = graph_builder.create_node<gb::NodeTypes::Value>((gb::IdT)val ^ (gb::IdT)&I); // !!!!!!
+        //             op_node->label() = get_value_str(*val, MST);
+        //             op_node->set_parent(&bb_cl);
+        //         } else if (isa<Instruction>(val)) {
+        //             op_node = graph_builder.create_node<gb::NodeTypes::Instr>((gb::IdT)val);
+        //             op_node->set_parent(&bb_cl);
+        //         }
+
+        //         graph_builder.create_edge<gb::EdgeTypes::Data>(*op_node, *i_node);
+        //     }
+        // }
 
         if (auto* cb = dyn_cast<CallBase>(&I)) {
             if (auto* callee = cb->getCalledFunction()) {
@@ -211,11 +231,16 @@ private:
         return Error::success();
     }
 
-    std::string get_value_str(Value& v, ModuleSlotTracker& MST) {
-        std::string s;
-        raw_string_ostream rso(s);
-        v.printAsOperand(rso, false, MST);
-        return s;
+    std::string get_value_str(Value& value, ModuleSlotTracker& MST) {
+        std::string value_str;
+        raw_string_ostream value_str_stream(value_str);
+        value.printAsOperand(value_str_stream, false, MST);
+
+        std::string value_type_str;
+        raw_string_ostream value_type_str_stream(value_type_str);
+        value.getType()->print(value_type_str_stream); 
+
+        return value_type_str_stream.str() + " " + value_str;
     }
 };
 
