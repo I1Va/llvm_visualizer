@@ -1,34 +1,61 @@
 #pragma once
 #include <string>
 #include <iostream>
+
 #include "gb_node.hpp"
+#include "gb_llvm_types.hpp"
 
 namespace dot
 {
 
 class DotGraph;
 
-class Cluster {
-public:
-    struct Properties {
-        std::string cluster_suffix = "";
-        std::string color = "#000000";       
-        std::string fillcolor = "#cccccc";   
-        std::string style = "filled,rounded"; 
-        int penwidth = 2; 
-        std::string fontcolor = "#000000";   
-        int fontsize = 16;
+struct ClusterProperties {
+    std::string cluster_suffix = "";
+    std::string color = "#000000";       
+    std::string fillcolor = "#cccccc";   
+    std::string style = "filled,rounded"; 
+    int penwidth = 2; 
+    std::string fontcolor = "#000000";   
+    int fontsize = 16;
+};   
 
-        Properties() = default;
-    };   
-private:
+static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES = 
+{
+    .cluster_suffix = "BasicBlock",
+    .color = "#4f81bd",          
+    .fillcolor = "#dce6f1",      
+    .style = "filled,rounded",
+    .penwidth = 2,
+    .fontcolor = "#0b3d91",      
+    .fontsize = 16,
+};
+
+static inline const ClusterProperties DEFAULT_F_CLUSTER_PROPERTIES = 
+{
+    .cluster_suffix = "Function",
+    .color = "#c0504d",          
+    .fillcolor = "#f2dcdb",      
+    .style = "filled,rounded",
+    .penwidth = 2,
+    .fontcolor = "#801818",      
+    .fontsize = 18,
+};
+
+class Cluster {
     gb::ICluster *underlying_;
     DotGraph *graph_;
-    Properties properties_;
+    ClusterProperties properties_;
 public:
-    explicit Cluster(gb::ICluster *Cluster, DotGraph *graph): underlying_(Cluster), graph_(graph) {
+    explicit Cluster(gb::ICluster *cluster, DotGraph *graph): underlying_(cluster), graph_(graph) {
         if (!underlying_) throw std::invalid_argument("Cannot wrap a null INode.");
         if (!graph_) throw std::invalid_argument("Nullptr DotGraph ptr passed."); 
+
+        switch (cluster->type()) {
+            case gb::ClusterTypes::BB: properties_ = DEFAULT_BB_CLUSTER_PROPERTIES; break;
+            case gb::ClusterTypes::F:  properties_ = DEFAULT_F_CLUSTER_PROPERTIES; break;
+            default: throw std::runtime_error("Got unknown cluster type: '" + std::to_string(cluster->type()) + "' in wrapper constructor.");
+        }  
     }
 
     gb::IdT id() const { return underlying_->id(); }

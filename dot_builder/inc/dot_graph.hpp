@@ -31,7 +31,6 @@ private:
     std::map<gb::IdT, std::unique_ptr<Node>> nodes_;                   
     std::map<gb::IdT, std::unique_ptr<Cluster>> clusters_;                 
     std::map<std::pair<gb::IdT, gb::IdT>, std::unique_ptr<Edge>> edges_;
-        
 public:
     explicit DotGraph(gb::GraphBuilder &builder) {
         for (auto &[id, cluster] : builder.clusters()) {

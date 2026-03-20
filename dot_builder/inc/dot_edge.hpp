@@ -1,32 +1,67 @@
 #pragma once
 #include <iostream>
+
 #include "gb_edge.hpp"
+#include "gb_llvm_types.hpp"
 
 namespace dot
 {
 
 class DotGraph;
 
-class Edge {
-public:
-    struct Properties {
-        std::string color = "black";       
-        std::string style = "solid";       
-        std::string arrowhead = "normal";  
-        int penwidth = 1;                  
-        int weight = 1;                    
-        std::string constraint = "true";   
+struct EdgeProperties {
+    std::string color = "black";       
+    std::string style = "solid";       
+    std::string arrowhead = "normal";  
+    int penwidth = 1;                  
+    int weight = 1;                    
+    std::string constraint = "true";   
+};
 
-        Properties() = default;
-    };
-private:
-    Properties properties_;
+static inline const EdgeProperties DEFAULT_DATAEDGE_PROPERTIES = 
+{
+    .color = "#1f77b4",   
+    .style = "dashed",    
+    .arrowhead = "vee",
+    .penwidth = 1,
+    .weight = 1,
+    .constraint = "true" 
+};
+
+static inline const EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES = 
+{
+    .color = "#d62728",   
+    .style = "solid",
+    .arrowhead = "normal",
+    .penwidth = 2,
+    .weight = 10,         
+    .constraint = "true"
+};
+
+static inline const EdgeProperties DEFAULT_CALL_EDGE_PROPERTIES = 
+{
+    .color = "#2ca02c",  
+    .style = "dashed",     
+    .arrowhead = "diamond",
+    .penwidth = 2,
+    .weight = 5,           
+    .constraint = "true"
+};
+
+class Edge {
+    EdgeProperties properties_;
     gb::IEdge *underlying_;
     DotGraph *graph_;
 public: 
     explicit Edge(gb::IEdge *edge, DotGraph *graph): underlying_(edge), graph_(graph) {
         if (!underlying_) throw std::invalid_argument("Cannot wrap a null IEdge."); 
         if (!graph) throw std::invalid_argument("Nullptr DotGraph ptr passed."); 
+        switch (edge->type()) {
+            case gb::EdgeTypes::Flow: properties_ = DEFAULT_FLOWEDGE_PROPERTIES; break;
+            case gb::EdgeTypes::Data: properties_ = DEFAULT_DATAEDGE_PROPERTIES; break;
+            case gb::EdgeTypes::Call: properties_ = DEFAULT_CALL_EDGE_PROPERTIES; break;
+            default: throw std::runtime_error("Got unknown edge type: '" + std::to_string(edge->type()) + "' in wrapper constructor.");
+        }  
     }
 
     std::pair<gb::IdT, gb::IdT> id() const { return underlying_->id(); }
