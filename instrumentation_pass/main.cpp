@@ -48,7 +48,7 @@ public:
         
 
         gather_static_info(M, MST, graph_builder);
-        perform_instrumentation(M, builder);
+        // perform_instrumentation(M, builder);
         
         if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
             errs() << "serialization failed\n";
@@ -306,25 +306,27 @@ private:
             }
         }
 
-        // for (auto &U : I.operands()) {
-        //     Value* value_op = U.get();
-        //     if (!value_op) continue;
-        //     gb::IdT node_id = (gb::IdT) value_op;
-        //     if (!dot_builder.is_node(node_id)) {
-        //         gb::INode* value_node = dot_builder.create_node<gb::NodeTypes::Value>(node_id); 
-        //         value_node->set_parent(&BBcluster); 
-        //         value_node->label() = get_value_str(*value_op, MST);
-        //         if (!value_node) {
-        //             const char* Msg = "failed to create ValueNode for operand";
-        //             return createStringError(std::errc::invalid_argument, "%s", Msg);
-        //         }
+        for (auto &U : I.operands()) {
+            Constant* value_op = dyn_cast<Constant>(U.get());
+            if (!value_op) continue;
+            
+            if (!dot_builder.get_cluster((gb::IdT) value_op)) {
+                gb::IdT node_id = ((gb::IdT) value_op) ^ ((gb::IdT) &I);
+                gb::INode* value_node = dot_builder.create_node<gb::NodeTypes::Constant>(node_id); 
+                value_node->set_parent(&BBcluster); 
+                value_node->label() = get_value_str(*value_op, MST);
                 
-        //         if (!dot_builder.create_edge<gb::EdgeTypes::Data>(*value_node, *node)) {
-        //             const char* Msg = "failed to create DataEdge from value to instruction";
-        //             return createStringError(std::errc::invalid_argument, "%s", Msg);
-        //         }
-        //     }
-        // }
+                if (!value_node) {
+                    const char* Msg = "failed to create ValueNode for operand";
+                    return createStringError(std::errc::invalid_argument, "%s", Msg);
+                }
+                
+                if (!dot_builder.create_edge<gb::EdgeTypes::Data>(*value_node, *node)) {
+                    const char* Msg = "failed to create DataEdge from value to instruction";
+                    return createStringError(std::errc::invalid_argument, "%s", Msg);
+                }
+            }
+        }
 
         return Error::success();
     }

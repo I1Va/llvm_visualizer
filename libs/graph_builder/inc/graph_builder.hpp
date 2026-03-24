@@ -17,15 +17,6 @@ class GraphBuilder {
     std::vector<std::unique_ptr<IEdge>> edges_;
 
 public:
-    IEdge* get_edge(const IdT left, const IdT right, const uint64_t edge_type) {
-        for (auto &edge : edges_) {
-            if (edge->left() == left && edge->right() == right && edge->type() == edge_type) {
-                return edge.get();
-            }
-        }
-
-        return nullptr;
-    } 
 
     INode *get_node(const IdT id) {
         auto it = nodes_.find(id);
@@ -52,10 +43,7 @@ public:
 
 private:
     template <uint64_t EdgeT>
-    IEdge* create_edge_impl(const IdT left, const IdT right) {
-        IEdge *contained_edge = get_edge(left, right, EdgeT);
-        if (contained_edge) return contained_edge;
-    
+    IEdge* create_edge_impl(const IdT left, const IdT right) {    
         auto edge = std::make_unique<Edge>(left, right, EdgeT);
         IEdge* edge_ptr = edge.get();
         edges_.push_back(std::move(edge));
@@ -108,9 +96,10 @@ public:
 
     template <uint64_t NodeT>
     INode* create_node(IdT id) {
-        auto it = nodes_.find(id);
-        if (it != nodes_.end()) {
-            return it->second.get();
+        INode *found_node = get_node(id);
+        if (found_node) {
+            assert(found_node->type() == NodeT);
+            return found_node;
         }
     
         auto node = std::make_unique<Node>(id, NodeT);

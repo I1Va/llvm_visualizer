@@ -24,7 +24,7 @@ static inline const EdgeProperties DEFAULT_DATAEDGE_PROPERTIES =
     .style = "dashed",    
     .arrowhead = "vee",
     .penwidth = 1,
-    .weight = 2,
+    .weight = 1,
     .constraint = "true" 
 };
 
@@ -33,8 +33,8 @@ static inline const EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES =
     .color = "#d62728",   
     .style = "solid",
     .arrowhead = "normal",
-    .penwidth = 2,
-    .weight = 10,         
+    .penwidth =2,
+    .weight = 20,         
     .constraint = "true"
 };
 
@@ -44,7 +44,7 @@ static inline const EdgeProperties DEFAULT_CALL_EDGE_PROPERTIES =
     .style = "dashed",     
     .arrowhead = "diamond",
     .penwidth = 2,
-    .weight = 10,           
+    .weight = 5,           
     .constraint = "true"
 };
 

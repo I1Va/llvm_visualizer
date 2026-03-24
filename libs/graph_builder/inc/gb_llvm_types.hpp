@@ -18,7 +18,7 @@ enum EdgeTypes : uint64_t {
 
 enum NodeTypes : uint64_t {
     Instr = 1,
-    Value = 2,
+    Constant = 2,
 };
 
 } // namespace gb 

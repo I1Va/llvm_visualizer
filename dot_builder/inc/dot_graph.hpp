@@ -48,16 +48,6 @@ public:
    std::map<gb::IdT, std::unique_ptr<Cluster>> &clusters() { return clusters_; };
    std::vector<std::unique_ptr<Edge>>          &edges() { return edges_; };
 
-    Edge* get_edge(const gb::IdT left, const gb::IdT right, const uint64_t edge_type) {
-        for (auto &edge : edges_) {
-            if (edge->left() == left && edge->right() == right && edge->type() == edge_type) {
-                return edge.get();
-            }
-        }
-
-        return nullptr;
-    } 
-
     Node *get_node(const gb::IdT id) {
         auto it = nodes_.find(id);
         if (it != nodes_.end()) {

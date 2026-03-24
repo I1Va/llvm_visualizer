@@ -52,7 +52,7 @@ public:
         if (!graph) throw std::invalid_argument("Nullptr DotGraph ptr passed."); 
         switch (node->type()) {
             case gb::NodeTypes::Instr: properties_ = DEFAULT_INSTRNODE_PROPERTIES; break;
-            case gb::NodeTypes::Value: properties_ = DEFAULT_VALUENODE_PROPERTIES; break;
+            case gb::NodeTypes::Constant: properties_ = DEFAULT_VALUENODE_PROPERTIES; break;
             default: throw std::runtime_error("Got unknown node type: '" + std::to_string(node->type()) + "' in wrapper constructor.");
         }        
     }

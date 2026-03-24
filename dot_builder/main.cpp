@@ -27,7 +27,7 @@ void generate_static_dot(const std::string& static_bin_path, const std::string& 
         gb::INode *node = nullptr;
         switch (node_type) {
             case gb::Instr: node = builder.create_node<gb::Instr>(node_id); break;
-            case gb::Value: node = builder.create_node<gb::Value>(node_id); break;
+            case gb::Constant: node = builder.create_node<gb::Constant>(node_id); break;
             default: throw std::runtime_error("Got unknown node type: '" + std::to_string(node_type) + "' during serialization.");
         }
         node->label() = pb_node.label();

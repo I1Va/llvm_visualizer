@@ -27,7 +27,7 @@ clang++ -std=c++20 -fpass-plugin="${plugin}" \
 clang++ -std=c++20 -fpass-plugin="${plugin}" \
     ./c_examples/${program_name}.cpp -emit-llvm ${optimization} -S -o ./c_examples/${program_name}.ll
 
-./fact.out 20
+./fact.out 20 
 
 protoc --decode=instrumentation.ExecutionData \
        --proto_path=libs/serializer/ \
