@@ -45,7 +45,8 @@ public:
         int8PtrTy = PointerType::get(Ctx, 0);
         int32Ty = Type::getInt32Ty(Ctx);
         int64Ty = Type::getInt64Ty(Ctx);
-    
+        
+
         gather_static_info(M, MST, graph_builder);
         perform_instrumentation(M, builder);
         
@@ -57,7 +58,7 @@ public:
     }
 
 private:
-    void perform_instrumentation(Module &M, IRBuilder<> &builder) {
+    Error perform_instrumentation(Module &M, IRBuilder<> &builder) {
          for (auto &F : M) {
             if (F.isDeclaration()) continue;
             insert_call_log(M, F, builder); 
@@ -66,42 +67,40 @@ private:
             }
         }
         insert_dynamic_info_dump(M, DYNAMIC_INFO_PATH);
+                    
+        return Error::success();
     }
 
-    void gather_static_info(Module &M, ModuleSlotTracker &MST, gb::GraphBuilder &graph_builder) {
+    Error gather_static_info(Module &M, ModuleSlotTracker &MST, gb::GraphBuilder &graph_builder) {
          for (auto &F : M) {
-            if (F.isDeclaration()) continue;
             MST.incorporateFunction(F);
-        
-            auto* f_cl = graph_builder.create_cluster<gb::ClusterTypes::F>((gb::IdT)&F);
+            gb::ICluster* f_cl = graph_builder.create_cluster<gb::ClusterTypes::F>((gb::IdT)&F);
             f_cl->label() = F.getName().str();
-
             for (auto &BB : F) {
                 auto* bb_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT)&BB);
                 bb_cl->label() = BB.getName().str();
                 bb_cl->set_parent(f_cl); 
 
-                for (auto &I : BB) {
-                    if (auto err = build_instruction_nodes(I, *bb_cl, *f_cl, graph_builder, MST)) {
-                        errs() << "Error: " << toString(std::move(err)) << "\n";
+                for (auto& I : BB) {
+                    std::string instrStr = get_instr_str(I);
+
+                    if (auto err = build_instruction_control_edges(M, MST, *f_cl, *bb_cl, I, graph_builder)) {
+                        std::string errStr = toString(std::move(err));
+                        return createStringError(std::errc::invalid_argument,
+                            "Error building `%s` control edges: %s", 
+                            instrStr.c_str(), errStr.c_str());
+                    }
+
+                    if (auto err = build_instruction_data_edges(M, MST, *f_cl, *bb_cl, I, graph_builder)) {
+                        std::string errStr = toString(std::move(err));
+                        return createStringError(std::errc::invalid_argument,
+                            "Error building `%s` data edges: %s", 
+                            instrStr.c_str(), errStr.c_str());
                     }
                 }
             }
         }
-
-        for (auto &F : M) {
-            for (auto &BB : F) {
-                auto* bb_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT)&BB);
-                for (gb::INode *node : bb_cl->nodes()) {
-                    std::cout << node->label() << " ";
-                }
-                std::cout << "\n";
-            }
-        }
-
-        
-
-
+        return Error::success();
     }
 
     void insert_basic_block_start_log(Module &M, BasicBlock &B, IRBuilder<> &builder) {
@@ -181,52 +180,151 @@ private:
         appendToGlobalDtors(M, wrapperFn, 0);
     }
     
-    Error build_instruction_nodes(Instruction &I, gb::ICluster &bb_cl, gb::ICluster &f_cl, 
-                                    gb::GraphBuilder &graph_builder, ModuleSlotTracker &MST) {
-            
-        auto* i_node = graph_builder.create_node<gb::NodeTypes::Instr>((gb::IdT)&I);
-        i_node->label() = I.getOpcodeName();
-        i_node->set_parent(&bb_cl);
+    Error build_instruction_control_edges
+    (
+        Module &M,
+        ModuleSlotTracker &MST,
+        gb::ICluster &Fcluster,
+        gb::ICluster &BBcluster,
+        Instruction &I,
+        gb::GraphBuilder &dot_builder
+    ) {
+        std::string instrStr = get_instr_str(I);
 
-        if (auto* prev = I.getPrevNode()) {
-            if (auto* prev_node = graph_builder.get_node((gb::IdT)prev)) {
-                graph_builder.create_edge<gb::EdgeTypes::Flow>(*prev_node, *i_node);
+        gb::INode* node = dot_builder.create_node<gb::NodeTypes::Instr>((gb::IdT)&I);
+        if (!node) {
+            return createStringError(std::errc::invalid_argument,
+                "failed to create InstrNode for `%s` in basic block", instrStr.c_str());
+        }
+        node->set_parent(&BBcluster);
+        node->label() = I.getOpcodeName(); 
+    
+        if (auto* prev_inst = I.getPrevNode()) {
+            gb::INode* prev_node = dot_builder.get_node((gb::IdT) prev_inst);
+            if (!prev_node) {
+                return createStringError(std::errc::invalid_argument,
+                    "failed to get previous InstrNode for `%s` in basic block", instrStr.c_str());
+            }
+
+            if (!dot_builder.create_edge<gb::EdgeTypes::Flow>(*prev_node, *node)) {
+                const char* Msg = "failed to create FlowEdge between instructions";
+                return createStringError(std::errc::invalid_argument, "%s", Msg);
+            }
+        }
+        
+        if (CallBase* callInst = dyn_cast<CallBase>(&I)) {
+            if (Function* calledFunc = callInst->getCalledFunction()) {
+                gb::ICluster* func_cluster = 
+                    dot_builder.create_cluster<gb::ClusterTypes::F>((gb::IdT) calledFunc);
+                if (!func_cluster) {
+                    return createStringError(std::errc::invalid_argument,
+                        "failed to create Function Cluster for called function: %s", 
+                        calledFunc->getName().str().c_str());
+                }
+                func_cluster->label() = calledFunc->getName().str();
+
+                if (!dot_builder.create_edge<gb::EdgeTypes::Call>(*node, *func_cluster)) {
+                    return createStringError(std::errc::invalid_argument,
+                        "failed to create CallEdge to function: %s", 
+                        calledFunc->getName().str().c_str());
+                }
+            }
+        }
+        
+        for (auto &U : I.operands()) {
+            BasicBlock* bb_operand = dyn_cast<BasicBlock>(U.get());
+            if (bb_operand) {
+                gb::ICluster *bb_cluster = 
+                    dot_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT) bb_operand);
+                    
+                if (!bb_cluster) {
+                    return createStringError(std::errc::invalid_argument,
+                        "failed to create operand basic block cluster for block: %s", 
+                        bb_operand->getName().str().c_str());
+                }
+                bb_cluster->set_parent(&Fcluster);
+                bb_cluster->label() = bb_operand->getName().str();
+                
+                if (!dot_builder.create_edge<gb::EdgeTypes::Flow>(*node, *bb_cluster)) {
+                    return createStringError(std::errc::invalid_argument,
+                        "failed to create FlowEdge to basic block: %s", 
+                        bb_operand->getName().str().c_str());
+                }
             }
         }
 
-        for (auto &U : I.operands()) {
-            if (auto* target_bb = dyn_cast<BasicBlock>(U.get())) {
-                auto* target_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT)target_bb);
-                target_cl->set_parent(&f_cl);
-                graph_builder.create_edge<gb::EdgeTypes::Flow>(*i_node, *target_cl);
+        return Error::success();
+    }
+        
+    Error build_instruction_data_edges
+    (
+        Module &M,
+        ModuleSlotTracker &MST,
+        gb::ICluster &Fcluster,
+        gb::ICluster &BBcluster,
+        Instruction &I,
+        gb::GraphBuilder &dot_builder
+    ) {
+        gb::INode *node = dot_builder.create_node<gb::NodeTypes::Instr>((gb::IdT) &I);
+        if (!node) {
+            const char* Msg = "failed to create InstrNode for data flow in instruction";
+            return createStringError(std::errc::invalid_argument, "%s", Msg);
+        }
+        node->set_parent(&BBcluster);
+        node->label() = I.getOpcodeName();
+
+        for (auto &U : I.uses()) {
+            if (Instruction* instr_user = dyn_cast<Instruction>(U.getUser())) {
+                BasicBlock *user_basic_block = instr_user->getParent();
+                if (!user_basic_block) {
+                    const char* Msg = "instruction user has no parent basic block";
+                    return createStringError(std::errc::invalid_argument, "%s", Msg);
+                }
+                
+                gb::ICluster* user_cluster = 
+                    dot_builder.create_cluster<gb::ClusterTypes::BB>((gb::IdT) user_basic_block);
+                if (!user_cluster) {
+                    return createStringError(std::errc::invalid_argument,
+                        "failed to create user cluster for basic block: %s", 
+                        user_basic_block->getName().str().c_str());
+                }
+                user_cluster->set_parent(&Fcluster);
+                user_cluster->label() = user_basic_block->getName().str();
+                    
+                gb::INode *user_node = dot_builder.create_node<gb::NodeTypes::Instr>((gb::IdT) instr_user);
+                if (!user_node) {
+                    const char* Msg = "failed to create user instruction node";
+                    return createStringError(std::errc::invalid_argument, "%s", Msg);
+                }
+                user_node->set_parent(user_cluster); 
+                user_node->label() = instr_user->getOpcodeName();
+                
+                if (!dot_builder.create_edge<gb::EdgeTypes::Data>(*node, *user_node)) {
+                    const char* Msg = "failed to create DataEdge between instructions";
+                    return createStringError(std::errc::invalid_argument, "%s", Msg);
+                }
             }
         }
 
         // for (auto &U : I.operands()) {
-        //     Value* val = U.get();
-        //     std::cout << get_value_str(*val, MST) << ", instr : " << (gb::IdT)&I << ", val id : " << (gb::IdT)val << "\n";
-        //     if (val && !isa<BasicBlock>(val) && !isa<Function>(val)) {
-        //         gb::INode *op_node = nullptr;
-        //         if (isa<Constant>(val)) {
-        //             op_node = graph_builder.create_node<gb::NodeTypes::Value>((gb::IdT)val ^ (gb::IdT)&I); // !!!!!!
-        //             op_node->label() = get_value_str(*val, MST);
-        //             op_node->set_parent(&bb_cl);
-        //         } else if (isa<Instruction>(val)) {
-        //             op_node = graph_builder.create_node<gb::NodeTypes::Instr>((gb::IdT)val);
-        //             op_node->set_parent(&bb_cl);
+        //     Value* value_op = U.get();
+        //     if (!value_op) continue;
+        //     gb::IdT node_id = (gb::IdT) value_op;
+        //     if (!dot_builder.is_node(node_id)) {
+        //         gb::INode* value_node = dot_builder.create_node<gb::NodeTypes::Value>(node_id); 
+        //         value_node->set_parent(&BBcluster); 
+        //         value_node->label() = get_value_str(*value_op, MST);
+        //         if (!value_node) {
+        //             const char* Msg = "failed to create ValueNode for operand";
+        //             return createStringError(std::errc::invalid_argument, "%s", Msg);
         //         }
-
-        //         graph_builder.create_edge<gb::EdgeTypes::Data>(*op_node, *i_node);
+                
+        //         if (!dot_builder.create_edge<gb::EdgeTypes::Data>(*value_node, *node)) {
+        //             const char* Msg = "failed to create DataEdge from value to instruction";
+        //             return createStringError(std::errc::invalid_argument, "%s", Msg);
+        //         }
         //     }
         // }
-
-        if (auto* cb = dyn_cast<CallBase>(&I)) {
-            if (auto* callee = cb->getCalledFunction()) {
-                auto* callee_cl = graph_builder.create_cluster<gb::ClusterTypes::F>((gb::IdT)callee);
-                callee_cl->label() = callee->getName().str();
-                graph_builder.create_edge<gb::EdgeTypes::Call>(*i_node, *callee_cl);
-            }
-        }
 
         return Error::success();
     }
@@ -242,6 +340,14 @@ private:
 
         return value_type_str_stream.str() + " " + value_str;
     }
+
+    std::string get_instr_str(Instruction& I) {
+        std::string str;
+        llvm::raw_string_ostream rso(str);
+        I.print(rso);
+        return rso.str();
+    }
+
 };
 
 PassPluginLibraryInfo getPassPluginInfo() {

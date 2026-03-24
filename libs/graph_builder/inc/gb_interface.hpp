@@ -51,7 +51,8 @@ public:
 
 class IEdge {
 public:
-    virtual std::pair<IdT, IdT> id() const = 0;
+    virtual IdT left() const = 0;
+    virtual IdT right() const = 0;
     virtual uint64_t type() const = 0;
     virtual const std::string &label() const = 0;
     virtual std::string &label() = 0;

@@ -7,13 +7,13 @@ namespace dot {
 void Edge::print(std::ostream& stream, const size_t indent) const {
     const std::string indent_string(indent, ' ');
     
-    std::string left = get_endpoint_identifier(id().first);
-    std::string right = get_endpoint_identifier(id().second);
-    if (left.empty() || right.empty()) {
+    std::string left_str = get_endpoint_identifier(left());
+    std::string right_str = get_endpoint_identifier(right());
+    if (left_str.empty() || right_str.empty()) {
         return;
     }
 
-    stream << indent_string << left << " -> "<< right;
+    stream << indent_string << left_str << " -> "<< right_str;
     stream << "[";
     stream << "label=\""      << label()                << "\" ";
     stream << "color=\""      << properties_.color      << "\" ";
@@ -27,11 +27,11 @@ void Edge::print(std::ostream& stream, const size_t indent) const {
 
 
 std::string Edge::get_endpoint_identifier(gb::IdT id) const {
-    if (graph_->is_node(id)) {
+    if (graph_->get_node(id)) {
         return Node::get_str_identifier(id);
     }
 
-    if (graph_->is_cluster(id)) {
+    if (graph_->get_cluster(id)) {
         Cluster *cluster = graph_->clusters().find(id)->second.get();
         if (!cluster->nodes().empty()) {
             return Node::get_str_identifier(cluster->nodes().front()->id());

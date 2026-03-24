@@ -30,7 +30,7 @@ private:
     Properties properties_;
     std::map<gb::IdT, std::unique_ptr<Node>> nodes_;                   
     std::map<gb::IdT, std::unique_ptr<Cluster>> clusters_;                 
-    std::map<std::pair<gb::IdT, gb::IdT>, std::unique_ptr<Edge>> edges_;
+    std::vector<std::unique_ptr<Edge>> edges_;
 public:
     explicit DotGraph(gb::GraphBuilder &builder) {
         for (auto &[id, cluster] : builder.clusters()) {
@@ -39,24 +39,40 @@ public:
         for (auto &[id, node] : builder.nodes()) {
             nodes_[id] = std::make_unique<Node>(node.get(), this);
         }
-        for (auto &[id, edge] : builder.edges()) {
-            edges_[id] = std::make_unique<Edge>(edge.get(), this);
+        for (auto &edge : builder.edges()) {
+            edges_.push_back(std::move(std::make_unique<Edge>(edge.get(), this)));
         }
     }
 
-    bool is_edge(const std::pair<gb::IdT, gb::IdT> id) {
-        return edges_.find(id) != edges_.end();
-    }
-    bool is_node(const gb::IdT id) {
-        return nodes_.find(id) != nodes_.end();
-    }
-    bool is_cluster(const gb::IdT id) {
-        return clusters_.find(id) != clusters_.end();
+   std::map<gb::IdT, std::unique_ptr<Node>>    &nodes() { return nodes_; };
+   std::map<gb::IdT, std::unique_ptr<Cluster>> &clusters() { return clusters_; };
+   std::vector<std::unique_ptr<Edge>>          &edges() { return edges_; };
+
+    Edge* get_edge(const gb::IdT left, const gb::IdT right, const uint64_t edge_type) {
+        for (auto &edge : edges_) {
+            if (edge->left() == left && edge->right() == right && edge->type() == edge_type) {
+                return edge.get();
+            }
+        }
+
+        return nullptr;
+    } 
+
+    Node *get_node(const gb::IdT id) {
+        auto it = nodes_.find(id);
+        if (it != nodes_.end()) {
+            return it->second.get();
+        }
+        return nullptr;
     }
 
-   std::map<gb::IdT, std::unique_ptr<Node>>                     &nodes() { return nodes_; };
-   std::map<gb::IdT, std::unique_ptr<Cluster>>                  &clusters() { return clusters_; };
-   std::map<std::pair<gb::IdT, gb::IdT>, std::unique_ptr<Edge>> &edges() { return edges_; };
+    Cluster *get_cluster(const gb::IdT id) {
+        auto it = clusters_.find(id);
+        if (it != clusters_.end()) {
+            return it->second.get();
+        }
+        return nullptr;
+    }
 
 
    void serialize_dot(std::ostream &stream) const {
@@ -73,7 +89,7 @@ public:
 
         const size_t indent = 2;
         
-        for (auto &[id, edge] : edges_) edge->print(stream, indent);
+        for (auto &edge : edges_) edge->print(stream, indent);
 
         stream << "}\n";
     }

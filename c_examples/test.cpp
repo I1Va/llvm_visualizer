@@ -1,5 +1,14 @@
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-int main(void) {
-   printf("Hello, world!\n");
+uint64_t func(uint64_t a) {
+  return a * a;
+}
+
+int main(int argc, char **argv) {
+   uint64_t arg = atoi(argv[1]);
+   printf("func(%lu) = %lu\n", arg, func(arg));
+  return 0;
 }

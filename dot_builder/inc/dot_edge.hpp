@@ -24,7 +24,7 @@ static inline const EdgeProperties DEFAULT_DATAEDGE_PROPERTIES =
     .style = "dashed",    
     .arrowhead = "vee",
     .penwidth = 1,
-    .weight = 1,
+    .weight = 2,
     .constraint = "true" 
 };
 
@@ -44,7 +44,7 @@ static inline const EdgeProperties DEFAULT_CALL_EDGE_PROPERTIES =
     .style = "dashed",     
     .arrowhead = "diamond",
     .penwidth = 2,
-    .weight = 5,           
+    .weight = 10,           
     .constraint = "true"
 };
 
@@ -63,8 +63,8 @@ public:
             default: throw std::runtime_error("Got unknown edge type: '" + std::to_string(edge->type()) + "' in wrapper constructor.");
         }  
     }
-
-    std::pair<gb::IdT, gb::IdT> id() const { return underlying_->id(); }
+    gb::IdT left() const { return underlying_->left(); }
+    gb::IdT right() const { return underlying_->right(); }
     uint64_t type() const { return underlying_->type(); }
     const std::string &label() const { return underlying_->label(); }
     std::string &label() { return underlying_->label(); }
