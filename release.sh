@@ -19,6 +19,8 @@ clang++ -std=c++20 -fpass-plugin="${plugin}" \
     -lprotobuf \
     -labsl_hash -labsl_city -labsl_raw_hash_set \
     -labsl_log_internal_message -labsl_log_internal_check_op \
+    -labsl_log_internal_message \
+    -labsl_log_internal_nullguard \
     -lpthread \
     -I./inc -I./build/libs/serializer/generated \
     ${optimization} \

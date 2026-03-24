@@ -8,6 +8,7 @@
 #include "dot_node.hpp"
 #include "dot_edge.hpp"
 #include "dot_cluster.hpp"
+#include "dynamic_info.hpp"
 
 namespace dot
 {
@@ -64,6 +65,30 @@ public:
         return nullptr;
     }
 
+    void apply_dynamic_info(const DynamicInfo &info) {
+        for (auto [block_id, block_cnt] : info.bb_counts()) {
+            auto it = clusters_.find(block_id);
+            assert(it != clusters_.end());
+            Cluster *cluster = it->second.get();
+            assert(cluster && cluster->type() == gb::ClusterTypes::BB);
+            cluster->set_use_count(block_cnt);
+        }
+
+        for (auto [call_edge_id, call_edge_count] : info.call_edge_counts()) {
+            Edge *edge = get_call_edge(call_edge_id.first, call_edge_id.second);
+            assert(edge && edge->type() == gb::EdgeTypes::Call);
+            edge->set_use_count(call_edge_count);
+        }
+
+        for (auto &[call_id, call_values] : info.call_values()) {
+            auto it = nodes_.find(call_id);
+            assert(it != nodes_.end());
+            Node *node = it->second.get();
+            assert(node && node->type() == gb::NodeTypes::Instr && node->label() == "call");
+            for (int64_t value : call_values)
+                node->add_call_value(value);
+        }
+    }
 
    void serialize_dot(std::ostream &stream) const {
         stream << "digraph "      << properties_.name    << " {\n";
@@ -84,6 +109,16 @@ public:
         stream << "}\n";
     }
 private:
+    Edge *get_call_edge(const gb::IdT left, const gb::IdT right) {
+        for (auto &edge : edges_) {
+            if (edge->type() == gb::EdgeTypes::Call && 
+                edge->left() == left && edge->right() == right) {
+                    return edge.get();
+                }
+        }
+        return nullptr;
+    }
+
     void print_cluster_recursive (
         std::ostream &stream,
         const std::unordered_map<gb::IdT, std::vector<gb::IdT>>& cluster_graph,

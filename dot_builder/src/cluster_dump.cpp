@@ -6,18 +6,35 @@
 namespace dot
 {
 
+static std::string get_heat_color(uint64_t count) {
+    const uint64_t max_heat = 100; 
+    double factor = std::min(static_cast<double>(count) / max_heat, 1.0);
+
+    int r = static_cast<int>(220 + (255 - 220) * factor);
+    int g = static_cast<int>(230 + (69 - 230) * factor);
+    int b = static_cast<int>(241 + (0 - 241) * factor);
+    // r = 255;
+    // g = 0;
+    // b = 0;
+
+    char buf[8];
+    snprintf(buf, sizeof(buf), "#%02x%02x%02x", r, g, b);
+    return std::string(buf);
+}
+
 void Cluster::print_open(std::ostream &stream, const size_t indent) const {
-    const std::string indent_string(indent, ' ');
+   const std::string indent_string(indent, ' ');
+    
+    std::string dynamic_fill = (use_count_ > 0) ? get_heat_color(use_count_) : properties_.fillcolor;
+
     stream << indent_string << "subgraph "       << get_str_identifier(id()) << " {" << "// " << properties_.cluster_suffix << "\n";
     stream << indent_string << "  label =\""     << label()                  << "\"\n";
-    stream << indent_string << "  fillcolor =\"" << properties_.fillcolor    << "\"\n"; 
+    stream << indent_string << "  fillcolor =\"" << dynamic_fill             << "\"\n"; 
     stream << indent_string << "  color =\""     << properties_.color        << "\"\n"; 
     stream << indent_string << "  style =\""     << properties_.style        << "\"\n";
     stream << indent_string << "  penwidth =\""  << properties_.penwidth     << "\"\n";
     stream << indent_string << "  fontcolor=\""  << properties_.fontcolor    << "\"\n";     
     stream << indent_string << "  fontsize=\""   << properties_.fontsize     << "\"\n";
-
-    
     
     for (const gb::INode *child : nodes()) {
         if (child == *nodes().begin() && child->type() == gb::NodeTypes::Instr) {

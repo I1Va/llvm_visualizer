@@ -46,6 +46,11 @@ class Node {
     gb::INode *underlying_;
     DotGraph *graph_;
     NodeProperties properties_;
+
+// dynamic info
+    std::unordered_map<int64_t, uint64_t> call_values_;
+
+
 public:
     explicit Node(gb::INode *node, DotGraph *graph): underlying_(node), graph_(graph) {
         if (!node) throw std::invalid_argument("Cannot wrap a null INode.");
@@ -70,6 +75,11 @@ public:
 
     static std::string get_str_identifier(gb::IdT id) {
         return "n" + std::to_string(id);
+    }
+
+// dynamic info methods
+    void add_call_value(const int64_t val) {
+        call_values_[val]++;
     }
 };
 

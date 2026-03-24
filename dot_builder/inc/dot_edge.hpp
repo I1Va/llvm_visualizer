@@ -52,6 +52,10 @@ class Edge {
     EdgeProperties properties_;
     gb::IEdge *underlying_;
     DotGraph *graph_;
+
+    // dynamic info
+    uint64_t use_count_ = 0;
+
 public: 
     explicit Edge(gb::IEdge *edge, DotGraph *graph): underlying_(edge), graph_(graph) {
         if (!underlying_) throw std::invalid_argument("Cannot wrap a null IEdge."); 
@@ -63,6 +67,7 @@ public:
             default: throw std::runtime_error("Got unknown edge type: '" + std::to_string(edge->type()) + "' in wrapper constructor.");
         }  
     }
+     
     gb::IdT left() const { return underlying_->left(); }
     gb::IdT right() const { return underlying_->right(); }
     uint64_t type() const { return underlying_->type(); }
@@ -72,6 +77,9 @@ public:
 
     void print(std::ostream& stream, const size_t indent) const;
     std::string get_endpoint_identifier(gb::IdT id) const;
+
+// dynamic info methods
+    void set_use_count(const uint64_t use_count) { use_count_ = use_count; }
 };
 
 } // namespace dot

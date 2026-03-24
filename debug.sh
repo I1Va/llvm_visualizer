@@ -17,17 +17,20 @@ clang++ -std=c++20 -fpass-plugin="${plugin}" \
     ${logger} \
     ${serializer} \
     -lprotobuf \
+    -labsl_log_internal_nullguard \
+    -labsl_log_internal_message \
+    -labsl_log_initialize \
+    -labsl_log_internal_check_op \
     -labsl_hash -labsl_city -labsl_raw_hash_set \
-    -labsl_log_internal_message -labsl_log_internal_check_op \
     -lpthread \
     -I./inc -I./build/libs/serializer/generated \
     ${optimization} \
-    -o fact.out
+    -o ${program_name}.out
 
 clang++ -std=c++20 -fpass-plugin="${plugin}" \
     ./c_examples/${program_name}.cpp -emit-llvm ${optimization} -S -o ./c_examples/${program_name}.ll
 
-./fact.out 20
+./${program_name}.out 20
 
 protoc --decode=instrumentation.ExecutionData \
        --proto_path=libs/serializer/ \

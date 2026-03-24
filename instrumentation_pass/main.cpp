@@ -54,7 +54,7 @@ public:
             errs() << "perform_instrumentation failed : " << err << "\n";
         }    
         
-        if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
+        if (proto::GraphSerializer::serialize(graph_builder, STATIC_INFO_PATH) != 0) {
             errs() << "serialization failed\n";
         }
         

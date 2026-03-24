@@ -6,8 +6,10 @@
 #include "static_info.pb.h"
 #include "gb_llvm_types.hpp"
 #include "dot_graph.hpp"
+#include "dynamic_info.pb.h"
+#include "dynamic_info.hpp"
 
-void generate_static_dot(const std::string& static_bin_path, const std::string& out_dot_path) {
+dot::DotGraph deserialize_dot_graph(gb::GraphBuilder &builder, const std::string& static_bin_path) {
     gb_ser::Graph static_graph;
     std::ifstream static_file(static_bin_path, std::ios::binary);
     
@@ -18,8 +20,6 @@ void generate_static_dot(const std::string& static_bin_path, const std::string& 
     if (!static_graph.ParseFromIstream(&static_file)) {
         throw std::runtime_error("Failed to parse protobuf data");
     }
-
-    gb::GraphBuilder builder;
 
     for (auto &pb_node : static_graph.nodes()) {
         uint64_t node_type = pb_node.type(); 
@@ -67,6 +67,12 @@ void generate_static_dot(const std::string& static_bin_path, const std::string& 
     }
     
     dot::DotGraph dot_graph(builder);
+    return dot_graph;
+}
+
+void generate_static_dot(const std::string& static_bin_path, const std::string& out_dot_path) {
+    gb::GraphBuilder builder;
+    dot::DotGraph dot_graph = deserialize_dot_graph(builder, static_bin_path);
 
     std::ofstream out_file(out_dot_path);
     if (!out_file) {

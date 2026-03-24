@@ -46,6 +46,9 @@ class Cluster {
     gb::ICluster *underlying_;
     DotGraph *graph_;
     ClusterProperties properties_;
+
+    // dynamic info
+    uint64_t use_count_ = 0;
 public:
     explicit Cluster(gb::ICluster *cluster, DotGraph *graph): underlying_(cluster), graph_(graph) {
         if (!underlying_) throw std::invalid_argument("Cannot wrap a null INode.");
@@ -57,7 +60,6 @@ public:
             default: throw std::runtime_error("Got unknown cluster type: '" + std::to_string(cluster->type()) + "' in wrapper constructor.");
         }  
     }
-
     gb::IdT id() const { return underlying_->id(); }
     uint64_t type() const { return underlying_->type(); }
     const std::string &label() const { return underlying_->label(); }
@@ -93,6 +95,9 @@ public:
 
     void print_open(std::ostream &stream, const size_t indent) const; 
     void print_close(std::ostream &stream, const size_t indent) const;
+
+// dynamic info methods
+    void set_use_count(const uint64_t use_count) { use_count_ = use_count; }
 };
 
 } // namespace dot

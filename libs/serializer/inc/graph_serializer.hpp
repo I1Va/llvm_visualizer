@@ -10,7 +10,7 @@ namespace proto {
 
 class GraphSerializer {
 public:
-    static int Serialize(const gb::GraphBuilder &builder, const std::string &filename) {
+    static int serialize(const gb::GraphBuilder &builder, const std::string &filename) {
         GOOGLE_PROTOBUF_VERIFY_VERSION;
         gb_ser::Graph proto_graph;
 

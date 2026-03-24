@@ -7,8 +7,11 @@ message CallEdge {
   uint64 callee_id = 2;
 }
 
+message Int64List {
+  repeated int64 values = 1;
+}
+
 message ExecutionData {
-  // Map: BB ID -> Count
   map<uint64, uint64> bb_counts = 1;
 
   message EdgeEntry {
@@ -17,5 +20,5 @@ message ExecutionData {
   }
   repeated EdgeEntry edge_counts = 2;
 
-  map<uint64, int64> call_values = 3;
+  map<uint64, Int64List> call_values = 3;
 }

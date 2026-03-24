@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(serializer LANGUAGES CXX)
 
+set(PROTO_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${PROTO_GEN_DIR}")
+
 add_library(${PROJECT_NAME} 
   ${CMAKE_CURRENT_SOURCE_DIR}/static_info.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_info.proto
+  ${PROTO_SRCS}
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -11,27 +15,25 @@ set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 find_package(Protobuf REQUIRED)
 find_package(absl REQUIRED)
 
-if(DEFINED Protobuf_PROTOC_EXECUTABLE AND NOT EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
-  message(FATAL_ERROR "Protobuf_PROTOC_EXECUTABLE is set but does not exist: ${Protobuf_PROTOC_EXECUTABLE}")
-endif()
-
-set(PROTO_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-
-file(MAKE_DIRECTORY "${PROTO_GEN_DIR}")
-
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
     ${PROTO_GEN_DIR}
 )
 
-target_link_libraries(serializer 
+target_link_libraries(${PROJECT_NAME} 
     PUBLIC 
     protobuf::libprotobuf
     graph_builder
     dynamic_info
+    absl::base
+    absl::strings
+    absl::synchronization
     absl::log_internal_check_op
     absl::log_internal_message
+    absl::log_internal_nullguard
+    absl::log_initialize
+    absl::raw_logging_internal
 )
 
 protobuf_generate(
@@ -39,7 +41,4 @@ protobuf_generate(
   LANGUAGE cpp
   PROTOC_OUT_DIR "${PROTO_GEN_DIR}"
   IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
-  PROTOS
-    "${CMAKE_CURRENT_SOURCE_DIR}/static_info.proto"
-    "${CMAKE_CURRENT_SOURCE_DIR}/dynamic_info.proto"
 )
