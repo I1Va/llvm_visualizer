@@ -5,13 +5,17 @@ target triple = "x86_64-pc-linux-gnu"
 
 @.str.1 = private unnamed_addr constant [17 x i8] c"Fact(%lu) = %lu\0A\00", align 1
 @str.2 = private unnamed_addr constant [34 x i8] c"Usage: 1 argument - factorial len\00", align 1
+@dump_dynamic_logger_info_path = private unnamed_addr constant [22 x i8] c"info/dynamic_info.bin\00", align 1
+@llvm.global_dtors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @__dtor_wrapper, ptr null }]
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind sspstrong willreturn memory(none) uwtable
 define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
+  call void @basic_block_start_logger(i64 93934778406944)
   %2 = icmp ult i64 %0, 2
   br i1 %2, label %45, label %3
 
 3:                                                ; preds = %1
+  call void @basic_block_start_logger(i64 93934777574528)
   %4 = add i64 %0, -1
   %5 = add i64 %0, -2
   %6 = and i64 %4, 7
@@ -19,6 +23,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   br i1 %7, label %32, label %8
 
 8:                                                ; preds = %3
+  call void @basic_block_start_logger(i64 93934777592256)
   %9 = and i64 %4, -8
   br label %10
 
@@ -26,6 +31,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %11 = phi i64 [ %0, %8 ], [ %28, %10 ]
   %12 = phi i64 [ 1, %8 ], [ %29, %10 ]
   %13 = phi i64 [ 0, %8 ], [ %30, %10 ]
+  call void @basic_block_start_logger(i64 93934778576784)
   %14 = add i64 %11, -1
   %15 = mul i64 %11, %12
   %16 = add i64 %11, -2
@@ -50,6 +56,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %33 = phi i64 [ poison, %3 ], [ %29, %10 ]
   %34 = phi i64 [ %0, %3 ], [ %28, %10 ]
   %35 = phi i64 [ 1, %3 ], [ %29, %10 ]
+  call void @basic_block_start_logger(i64 93934777591120)
   %36 = icmp eq i64 %6, 0
   br i1 %36, label %45, label %37
 
@@ -57,6 +64,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %38 = phi i64 [ %41, %37 ], [ %34, %32 ]
   %39 = phi i64 [ %42, %37 ], [ %35, %32 ]
   %40 = phi i64 [ %43, %37 ], [ 0, %32 ]
+  call void @basic_block_start_logger(i64 93934777664992)
   %41 = add i64 %38, -1
   %42 = mul i64 %38, %39
   %43 = add i64 %40, 1
@@ -65,97 +73,129 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
 
 45:                                               ; preds = %32, %37, %1
   %46 = phi i64 [ 1, %1 ], [ %33, %32 ], [ %42, %37 ]
+  call void @basic_block_start_logger(i64 93934778576688)
   ret i64 %46
 }
 
 ; Function Attrs: mustprogress norecurse nounwind sspstrong uwtable
 define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef readonly captures(none) %1) local_unnamed_addr #1 {
+  call void @basic_block_start_logger(i64 93934778568128)
   %3 = icmp eq i32 %0, 2
-  br i1 %3, label %6, label %4
+  br i1 %3, label %7, label %4
 
 4:                                                ; preds = %2
+  call void @basic_block_start_logger(i64 93934778568224)
+  call void @call_logger(i64 93934778605744, i64 93934778601048)
   %5 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.2)
-  br label %64
+  %6 = sext i32 %5 to i64
+  call void @call_logger(i64 93934778368480, i64 93934777568280)
+  call void @res_int_logger(i64 %6, i64 93934778605744)
+  br label %68
 
-6:                                                ; preds = %2
-  %7 = tail call ptr @__errno_location() #6
-  %8 = load i32, ptr %7, align 4, !tbaa !7
-  %9 = icmp eq i32 %8, 0
-  br i1 %9, label %10, label %62
+7:                                                ; preds = %2
+  call void @basic_block_start_logger(i64 93934778594464)
+  call void @call_logger(i64 93934778604320, i64 93934778602312)
+  %8 = tail call ptr @__errno_location() #6
+  %9 = ptrtoint ptr %8 to i64
+  call void @call_logger(i64 93934778607216, i64 93934777568280)
+  call void @res_int_logger(i64 %9, i64 93934778604320)
+  %10 = load i32, ptr %8, align 4, !tbaa !7
+  %11 = icmp eq i32 %10, 0
+  br i1 %11, label %12, label %65
 
-10:                                               ; preds = %6
-  %11 = getelementptr inbounds nuw i8, ptr %1, i64 8
-  %12 = load ptr, ptr %11, align 8, !tbaa !11
-  %13 = tail call i64 @__isoc23_strtol(ptr noundef nonnull %12, ptr noundef null, i32 noundef 10) #7
-  %14 = shl i64 %13, 32
-  %15 = ashr exact i64 %14, 32
-  %16 = icmp ult i64 %15, 2
-  br i1 %16, label %59, label %17
+12:                                               ; preds = %7
+  call void @basic_block_start_logger(i64 93934778601920)
+  %13 = getelementptr inbounds nuw i8, ptr %1, i64 8
+  %14 = load ptr, ptr %13, align 8, !tbaa !11
+  call void @call_logger(i64 93934777976640, i64 93934778615800)
+  %15 = tail call i64 @__isoc23_strtol(ptr noundef nonnull %14, ptr noundef null, i32 noundef 10) #7
+  call void @call_logger(i64 93934778575296, i64 93934777568280)
+  call void @res_int_logger(i64 %15, i64 93934777976640)
+  %16 = shl i64 %15, 32
+  %17 = ashr exact i64 %16, 32
+  %18 = icmp ult i64 %17, 2
+  br i1 %18, label %61, label %19
 
-17:                                               ; preds = %10
-  %18 = add nsw i64 %15, -1
-  %19 = add nsw i64 %15, -2
-  %20 = and i64 %18, 7
-  %21 = icmp ult i64 %19, 7
-  br i1 %21, label %46, label %22
+19:                                               ; preds = %12
+  call void @basic_block_start_logger(i64 93934778761472)
+  %20 = add nsw i64 %17, -1
+  %21 = add nsw i64 %17, -2
+  %22 = and i64 %20, 7
+  %23 = icmp ult i64 %21, 7
+  br i1 %23, label %48, label %24
 
-22:                                               ; preds = %17
-  %23 = and i64 %18, -8
-  br label %24
+24:                                               ; preds = %19
+  call void @basic_block_start_logger(i64 93934778814000)
+  %25 = and i64 %20, -8
+  br label %26
 
-24:                                               ; preds = %24, %22
-  %25 = phi i64 [ %15, %22 ], [ %42, %24 ]
-  %26 = phi i64 [ 1, %22 ], [ %43, %24 ]
-  %27 = phi i64 [ 0, %22 ], [ %44, %24 ]
-  %28 = add i64 %25, -1
-  %29 = mul i64 %26, %25
-  %30 = add i64 %25, -2
-  %31 = mul i64 %29, %28
-  %32 = add i64 %25, -3
+26:                                               ; preds = %26, %24
+  %27 = phi i64 [ %17, %24 ], [ %44, %26 ]
+  %28 = phi i64 [ 1, %24 ], [ %45, %26 ]
+  %29 = phi i64 [ 0, %24 ], [ %46, %26 ]
+  call void @basic_block_start_logger(i64 93934777785360)
+  %30 = add i64 %27, -1
+  %31 = mul i64 %28, %27
+  %32 = add i64 %27, -2
   %33 = mul i64 %31, %30
-  %34 = add i64 %25, -4
+  %34 = add i64 %27, -3
   %35 = mul i64 %33, %32
-  %36 = add i64 %25, -5
+  %36 = add i64 %27, -4
   %37 = mul i64 %35, %34
-  %38 = add i64 %25, -6
+  %38 = add i64 %27, -5
   %39 = mul i64 %37, %36
-  %40 = add i64 %25, -7
+  %40 = add i64 %27, -6
   %41 = mul i64 %39, %38
-  %42 = add i64 %25, -8
+  %42 = add i64 %27, -7
   %43 = mul i64 %41, %40
-  %44 = add i64 %27, 8
-  %45 = icmp eq i64 %44, %23
-  br i1 %45, label %46, label %24
+  %44 = add i64 %27, -8
+  %45 = mul i64 %43, %42
+  %46 = add i64 %29, 8
+  %47 = icmp eq i64 %46, %25
+  br i1 %47, label %48, label %26
 
-46:                                               ; preds = %24, %17
-  %47 = phi i64 [ poison, %17 ], [ %43, %24 ]
-  %48 = phi i64 [ %15, %17 ], [ %42, %24 ]
-  %49 = phi i64 [ 1, %17 ], [ %43, %24 ]
-  %50 = icmp eq i64 %20, 0
-  br i1 %50, label %59, label %51
+48:                                               ; preds = %26, %19
+  %49 = phi i64 [ poison, %19 ], [ %45, %26 ]
+  %50 = phi i64 [ %17, %19 ], [ %44, %26 ]
+  %51 = phi i64 [ 1, %19 ], [ %45, %26 ]
+  call void @basic_block_start_logger(i64 93934778814192)
+  %52 = icmp eq i64 %22, 0
+  br i1 %52, label %61, label %53
 
-51:                                               ; preds = %46, %51
-  %52 = phi i64 [ %55, %51 ], [ %48, %46 ]
-  %53 = phi i64 [ %56, %51 ], [ %49, %46 ]
-  %54 = phi i64 [ %57, %51 ], [ 0, %46 ]
-  %55 = add i64 %52, -1
-  %56 = mul i64 %53, %52
-  %57 = add i64 %54, 1
-  %58 = icmp eq i64 %57, %20
-  br i1 %58, label %59, label %51, !llvm.loop !14
+53:                                               ; preds = %48, %53
+  %54 = phi i64 [ %57, %53 ], [ %50, %48 ]
+  %55 = phi i64 [ %58, %53 ], [ %51, %48 ]
+  %56 = phi i64 [ %59, %53 ], [ 0, %48 ]
+  call void @basic_block_start_logger(i64 93934777592704)
+  %57 = add i64 %54, -1
+  %58 = mul i64 %55, %54
+  %59 = add i64 %56, 1
+  %60 = icmp eq i64 %59, %22
+  br i1 %60, label %61, label %53, !llvm.loop !14
 
-59:                                               ; preds = %46, %51, %10
-  %60 = phi i64 [ 1, %10 ], [ %47, %46 ], [ %56, %51 ]
-  %61 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.1, i64 noundef %15, i64 noundef %60)
-  br label %64
+61:                                               ; preds = %48, %53, %12
+  %62 = phi i64 [ 1, %12 ], [ %49, %48 ], [ %58, %53 ]
+  call void @basic_block_start_logger(i64 93934777786592)
+  call void @call_logger(i64 93934777072080, i64 93934778595256)
+  %63 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.1, i64 noundef %17, i64 noundef %62)
+  %64 = sext i32 %63 to i64
+  call void @call_logger(i64 93934777780208, i64 93934777568280)
+  call void @res_int_logger(i64 %64, i64 93934777072080)
+  br label %68
 
-62:                                               ; preds = %6
-  %63 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.2)
-  br label %64
+65:                                               ; preds = %7
+  call void @basic_block_start_logger(i64 93934778602112)
+  call void @call_logger(i64 93934778609792, i64 93934778601048)
+  %66 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.2)
+  %67 = sext i32 %66 to i64
+  call void @call_logger(i64 93934777780976, i64 93934777568280)
+  call void @res_int_logger(i64 %67, i64 93934778609792)
+  br label %68
 
-64:                                               ; preds = %62, %59, %4
-  %65 = phi i32 [ 1, %4 ], [ 0, %59 ], [ 1, %62 ]
-  ret i32 %65
+68:                                               ; preds = %65, %61, %4
+  %69 = phi i32 [ 1, %4 ], [ 0, %61 ], [ 1, %65 ]
+  call void @basic_block_start_logger(i64 93934777749616)
+  ret i32 %69
 }
 
 ; Function Attrs: nofree nounwind
@@ -169,6 +209,19 @@ declare i64 @__isoc23_strtol(ptr noundef, ptr noundef, i32 noundef) local_unname
 
 ; Function Attrs: nofree nounwind
 declare noundef i32 @puts(ptr noundef readonly captures(none)) local_unnamed_addr #5
+
+declare void @call_logger(i64, i64)
+
+declare void @res_int_logger(i64, i64)
+
+declare void @basic_block_start_logger(i64)
+
+define internal void @__dtor_wrapper() {
+  call void @dump_dynamic_logger_info(ptr @dump_dynamic_logger_info_path)
+  ret void
+}
+
+declare void @dump_dynamic_logger_info(ptr)
 
 attributes #0 = { mustprogress nofree norecurse nosync nounwind sspstrong willreturn memory(none) uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { mustprogress norecurse nounwind sspstrong uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }

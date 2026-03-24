@@ -66,7 +66,7 @@ public:
     void set_parent(gb::ICluster* parent) { underlying_->set_parent(parent); }
     const gb::ICluster* parent() { return underlying_->parent(); } 
 
-    void print(std::ostream &stream, const size_t indent) const;
+    void print(std::ostream &stream, const size_t indent, bool highlighted=false) const;
 
     static std::string get_str_identifier(gb::IdT id) {
         return "n" + std::to_string(id);

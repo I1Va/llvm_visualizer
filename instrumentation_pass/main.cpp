@@ -46,9 +46,13 @@ public:
         int32Ty = Type::getInt32Ty(Ctx);
         int64Ty = Type::getInt64Ty(Ctx);
         
+        if (auto err = gather_static_info(M, MST, graph_builder)) {
+            errs() << "gather_static_info failed : " << err << "\n";
+        }
 
-        gather_static_info(M, MST, graph_builder);
-        // perform_instrumentation(M, builder);
+        if (auto err = perform_instrumentation(M, builder)) {
+            errs() << "perform_instrumentation failed : " << err << "\n";
+        }    
         
         if (proto::GraphSerializer::Serialize(graph_builder, STATIC_INFO_PATH) != 0) {
             errs() << "serialization failed\n";
@@ -58,6 +62,10 @@ public:
     }
 
 private:
+    static gb::IdT get_constant_unique_id(const gb::IdT constant_id, const gb::IdT instr_id) {
+        return constant_id ^ instr_id;
+    }
+
     Error perform_instrumentation(Module &M, IRBuilder<> &builder) {
          for (auto &F : M) {
             if (F.isDeclaration()) continue;
@@ -311,7 +319,7 @@ private:
             if (!value_op) continue;
             
             if (!dot_builder.get_cluster((gb::IdT) value_op)) {
-                gb::IdT node_id = ((gb::IdT) value_op) ^ ((gb::IdT) &I);
+                gb::IdT node_id = get_constant_unique_id((gb::IdT)value_op, (gb::IdT)&I);
                 gb::INode* value_node = dot_builder.create_node<gb::NodeTypes::Constant>(node_id); 
                 value_node->set_parent(&BBcluster); 
                 value_node->label() = get_value_str(*value_op, MST);
