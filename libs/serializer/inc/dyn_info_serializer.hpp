@@ -51,7 +51,7 @@ public:
         return 0;
     }
 
-    DynamicInfo deserialize(const std::string& filepath) {
+    static DynamicInfo deserialize(const std::string& filepath) {
         instrumentation::ExecutionData proto_data;
         std::ifstream input(filepath, std::ios::binary);
         
@@ -70,7 +70,7 @@ public:
         }
 
         for (const auto& entry : proto_data.edge_counts()) {
-            if (!entry.has_edge()) continue; // Safety check for optional sub-messages
+            if (!entry.has_edge()) continue;
             uint64_t caller = entry.edge().caller_id();
             uint64_t callee = entry.edge().callee_id();
             info.set_call_edge_count({caller, callee}, entry.count());
