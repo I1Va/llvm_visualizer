@@ -33,10 +33,18 @@ std::string Edge::get_endpoint_identifier(gb::IdT id) const {
 
     if (graph_->get_cluster(id)) {
         Cluster *cluster = graph_->clusters().find(id)->second.get();
-        if (!cluster->nodes().empty()) {
+        assert(cluster);
+        if (cluster->type() == gb::ClusterTypes::F) {
+            gb::ICluster *BB = cluster->clusters().empty() ? nullptr : cluster->clusters().front();
+            gb::INode *BB_fnode = (!BB || BB->nodes().empty()) ? nullptr : BB->nodes().front();
+            if (BB_fnode) return Node::get_str_identifier(BB_fnode->id());
+            return cluster->get_fict_node_str_id(id);
+        } else {
+            assert(cluster->type() == gb::ClusterTypes::BB);
+            assert(!cluster->nodes().empty());
+            assert(cluster->nodes().front());
             return Node::get_str_identifier(cluster->nodes().front()->id());
         }
-        return cluster->get_fict_node_str_id(id);
     }
     throw std::runtime_error("Incorrect edge endpoint type");
 }

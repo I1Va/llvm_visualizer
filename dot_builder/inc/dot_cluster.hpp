@@ -34,8 +34,8 @@ static inline const ClusterProperties DEFAULT_BB_CLUSTER_PROPERTIES =
 static inline const ClusterProperties DEFAULT_F_CLUSTER_PROPERTIES = 
 {
     .cluster_suffix = "Function",
-    .color = "#c0504d",          
-    .fillcolor = "#f2dcdb",      
+    .color = "#70be3bff",          
+    .fillcolor = "#ffffffff",      
     .style = "filled,rounded",
     .penwidth = 2,
     .fontcolor = "#801818",      
