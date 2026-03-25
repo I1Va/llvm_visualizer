@@ -32,6 +32,9 @@ private:
     std::map<gb::IdT, std::unique_ptr<Node>> nodes_;                   
     std::map<gb::IdT, std::unique_ptr<Cluster>> clusters_;                 
     std::vector<std::unique_ptr<Edge>> edges_;
+
+    uint64_t max_bb_count_ = 1;
+
 public:
     explicit DotGraph(gb::GraphBuilder &builder) {
         for (auto &[id, cluster] : builder.clusters()) {
@@ -45,9 +48,11 @@ public:
         }
     }
 
-   std::map<gb::IdT, std::unique_ptr<Node>>    &nodes() { return nodes_; };
-   std::map<gb::IdT, std::unique_ptr<Cluster>> &clusters() { return clusters_; };
-   std::vector<std::unique_ptr<Edge>>          &edges() { return edges_; };
+    std::map<gb::IdT, std::unique_ptr<Node>>    &nodes() { return nodes_; };
+    std::map<gb::IdT, std::unique_ptr<Cluster>> &clusters() { return clusters_; };
+    std::vector<std::unique_ptr<Edge>>          &edges() { return edges_; };
+    
+    uint64_t max_bb_count() const { return max_bb_count_; }
 
     Node *get_node(const gb::IdT id) {
         auto it = nodes_.find(id);
@@ -66,12 +71,15 @@ public:
     }
 
     void apply_dynamic_info(const DynamicInfo &info) {
+        max_bb_count_ = 0;
+    
         for (auto [block_id, block_cnt] : info.bb_counts()) {
             auto it = clusters_.find(block_id);
             assert(it != clusters_.end());
             Cluster *cluster = it->second.get();
             assert(cluster && cluster->type() == gb::ClusterTypes::BB);
             cluster->set_use_count(block_cnt);
+            max_bb_count_ = std::max(max_bb_count_, block_cnt);
         }
 
         for (auto [call_edge_id, call_edge_count] : info.call_edge_counts()) {

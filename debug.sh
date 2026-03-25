@@ -7,7 +7,7 @@ cmake --build build
 cd ..
 
 program_name="fact"
-optimization="-O0"
+optimization="-O2"
 logger="./instrumentation_pass/build/CMakeFiles/logger_obj.dir/src/logger.cpp.o"
 serializer="./instrumentation_pass/build/serializer/libserializer.a"
 plugin="./instrumentation_pass/build/libllvm_instrumentation_pass.so"

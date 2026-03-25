@@ -6,8 +6,7 @@
 namespace dot
 {
 
-static std::string get_heat_color(uint64_t count) {
-    const uint64_t max_heat = 30; 
+static std::string get_heat_color(uint64_t count, uint64_t max_heat) {
     double factor = std::min(static_cast<double>(count) / max_heat, 1.0);
 
     int r = static_cast<int>(220 + (255 - 220) * factor);
@@ -24,14 +23,13 @@ void Cluster::print_open(std::ostream &stream, const size_t indent) const {
     
     std::string dynamic_fill = properties_.fillcolor;
     if (use_count_ > 0 && type() != gb::ClusterTypes::F) {
-        dynamic_fill = get_heat_color(use_count_);
+        dynamic_fill = get_heat_color(use_count_, graph_->max_bb_count());
     }
 
     std::string enhanced_label = label();
     if (use_count_ > 0) {
         enhanced_label += "\\n(uses: " + std::to_string(use_count_) + ")";
     }
-
 
     stream << indent_string << "subgraph "       << get_str_identifier(id()) << " {" << "// " << properties_.cluster_suffix << "\n";
     stream << indent_string << "  label =\""     << enhanced_label           << "\"\n";
