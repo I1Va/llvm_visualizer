@@ -10,12 +10,12 @@ target triple = "x86_64-pc-linux-gnu"
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind sspstrong willreturn memory(none) uwtable
 define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
-  call void @basic_block_start_logger(i64 93956946485888)
+  call void @basic_block_start_logger(i64 2)
   %2 = icmp ult i64 %0, 2
   br i1 %2, label %45, label %3
 
 3:                                                ; preds = %1
-  call void @basic_block_start_logger(i64 93956947186272)
+  call void @basic_block_start_logger(i64 8)
   %4 = add i64 %0, -1
   %5 = add i64 %0, -2
   %6 = and i64 %4, 7
@@ -23,7 +23,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   br i1 %7, label %32, label %8
 
 8:                                                ; preds = %3
-  call void @basic_block_start_logger(i64 93956947181968)
+  call void @basic_block_start_logger(i64 16)
   %9 = and i64 %4, -8
   br label %10
 
@@ -31,7 +31,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %11 = phi i64 [ %0, %8 ], [ %28, %10 ]
   %12 = phi i64 [ 1, %8 ], [ %29, %10 ]
   %13 = phi i64 [ 0, %8 ], [ %30, %10 ]
-  call void @basic_block_start_logger(i64 93956947001232)
+  call void @basic_block_start_logger(i64 20)
   %14 = add i64 %11, -1
   %15 = mul i64 %11, %12
   %16 = add i64 %11, -2
@@ -56,7 +56,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %33 = phi i64 [ poison, %3 ], [ %29, %10 ]
   %34 = phi i64 [ %0, %3 ], [ %28, %10 ]
   %35 = phi i64 [ 1, %3 ], [ %29, %10 ]
-  call void @basic_block_start_logger(i64 93956947177664)
+  call void @basic_block_start_logger(i64 43)
   %36 = icmp eq i64 %6, 0
   br i1 %36, label %45, label %37
 
@@ -64,7 +64,7 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
   %38 = phi i64 [ %41, %37 ], [ %34, %32 ]
   %39 = phi i64 [ %42, %37 ], [ %35, %32 ]
   %40 = phi i64 [ %43, %37 ], [ 0, %32 ]
-  call void @basic_block_start_logger(i64 93956946212368)
+  call void @basic_block_start_logger(i64 50)
   %41 = add i64 %38, -1
   %42 = mul i64 %38, %39
   %43 = add i64 %40, 1
@@ -73,51 +73,48 @@ define dso_local noundef i64 @_Z4factm(i64 noundef %0) local_unnamed_addr #0 {
 
 45:                                               ; preds = %32, %37, %1
   %46 = phi i64 [ 1, %1 ], [ %33, %32 ], [ %42, %37 ]
-  call void @basic_block_start_logger(i64 93956947001136)
+  call void @basic_block_start_logger(i64 59)
   ret i64 %46
 }
 
 ; Function Attrs: mustprogress norecurse nounwind sspstrong uwtable
 define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef readonly captures(none) %1) local_unnamed_addr #1 {
-  call void @basic_block_start_logger(i64 93956946992576)
+  call void @basic_block_start_logger(i64 63)
   %3 = icmp eq i32 %0, 2
   br i1 %3, label %7, label %4
 
 4:                                                ; preds = %2
-  call void @basic_block_start_logger(i64 93956946992672)
-  call void @call_logger(i64 93956947030192, i64 93956947025496)
+  call void @basic_block_start_logger(i64 69)
+  call void @call_logger(i64 70, i64 155)
   %5 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.2)
   %6 = sext i32 %5 to i64
-  call void @call_logger(i64 93956947301792, i64 93956947017016)
-  call void @res_int_logger(i64 %6, i64 93956947030192)
+  call void @res_int_logger(i64 %6, i64 70)
   br label %68
 
 7:                                                ; preds = %2
-  call void @basic_block_start_logger(i64 93956947018912)
-  call void @call_logger(i64 93956947028768, i64 93956947026760)
+  call void @basic_block_start_logger(i64 73)
+  call void @call_logger(i64 74, i64 153)
   %8 = tail call ptr @__errno_location() #6
   %9 = ptrtoint ptr %8 to i64
-  call void @call_logger(i64 93956947031664, i64 93956947017016)
-  call void @res_int_logger(i64 %9, i64 93956947028768)
+  call void @res_int_logger(i64 %9, i64 74)
   %10 = load i32, ptr %8, align 4, !tbaa !7
   %11 = icmp eq i32 %10, 0
   br i1 %11, label %12, label %65
 
 12:                                               ; preds = %7
-  call void @basic_block_start_logger(i64 93956947026368)
+  call void @basic_block_start_logger(i64 80)
   %13 = getelementptr inbounds nuw i8, ptr %1, i64 8
   %14 = load ptr, ptr %13, align 8, !tbaa !11
-  call void @call_logger(i64 93956946201680, i64 93956947040248)
+  call void @call_logger(i64 84, i64 154)
   %15 = tail call i64 @__isoc23_strtol(ptr noundef nonnull %14, ptr noundef null, i32 noundef 10) #7
-  call void @call_logger(i64 93956946999744, i64 93956947017016)
-  call void @res_int_logger(i64 %15, i64 93956946201680)
+  call void @res_int_logger(i64 %15, i64 84)
   %16 = shl i64 %15, 32
   %17 = ashr exact i64 %16, 32
   %18 = icmp ult i64 %17, 2
   br i1 %18, label %61, label %19
 
 19:                                               ; preds = %12
-  call void @basic_block_start_logger(i64 93956946012704)
+  call void @basic_block_start_logger(i64 91)
   %20 = add nsw i64 %17, -1
   %21 = add nsw i64 %17, -2
   %22 = and i64 %20, 7
@@ -125,7 +122,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   br i1 %23, label %48, label %24
 
 24:                                               ; preds = %19
-  call void @basic_block_start_logger(i64 93956946006512)
+  call void @basic_block_start_logger(i64 99)
   %25 = and i64 %20, -8
   br label %26
 
@@ -133,7 +130,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   %27 = phi i64 [ %17, %24 ], [ %44, %26 ]
   %28 = phi i64 [ 1, %24 ], [ %45, %26 ]
   %29 = phi i64 [ 0, %24 ], [ %46, %26 ]
-  call void @basic_block_start_logger(i64 93956946873872)
+  call void @basic_block_start_logger(i64 103)
   %30 = add i64 %27, -1
   %31 = mul i64 %28, %27
   %32 = add i64 %27, -2
@@ -158,7 +155,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   %49 = phi i64 [ poison, %19 ], [ %45, %26 ]
   %50 = phi i64 [ %17, %19 ], [ %44, %26 ]
   %51 = phi i64 [ 1, %19 ], [ %45, %26 ]
-  call void @basic_block_start_logger(i64 93956946006704)
+  call void @basic_block_start_logger(i64 126)
   %52 = icmp eq i64 %22, 0
   br i1 %52, label %61, label %53
 
@@ -166,7 +163,7 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
   %54 = phi i64 [ %57, %53 ], [ %50, %48 ]
   %55 = phi i64 [ %58, %53 ], [ %51, %48 ]
   %56 = phi i64 [ %59, %53 ], [ 0, %48 ]
-  call void @basic_block_start_logger(i64 93956947224384)
+  call void @basic_block_start_logger(i64 133)
   %57 = add i64 %54, -1
   %58 = mul i64 %55, %54
   %59 = add i64 %56, 1
@@ -175,26 +172,24 @@ define dso_local noundef range(i32 0, 2) i32 @main(i32 noundef %0, ptr noundef r
 
 61:                                               ; preds = %48, %53, %12
   %62 = phi i64 [ 1, %12 ], [ %49, %48 ], [ %58, %53 ]
-  call void @basic_block_start_logger(i64 93956945999824)
-  call void @call_logger(i64 93956945496528, i64 93956947019704)
+  call void @basic_block_start_logger(i64 142)
+  call void @call_logger(i64 144, i64 152)
   %63 = tail call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.str.1, i64 noundef %17, i64 noundef %62)
   %64 = sext i32 %63 to i64
-  call void @call_logger(i64 93956947339456, i64 93956947017016)
-  call void @res_int_logger(i64 %64, i64 93956945496528)
+  call void @res_int_logger(i64 %64, i64 144)
   br label %68
 
 65:                                               ; preds = %7
-  call void @basic_block_start_logger(i64 93956947026560)
-  call void @call_logger(i64 93956947034240, i64 93956947025496)
+  call void @basic_block_start_logger(i64 146)
+  call void @call_logger(i64 147, i64 155)
   %66 = tail call i32 @puts(ptr nonnull dereferenceable(1) @str.2)
   %67 = sext i32 %66 to i64
-  call void @call_logger(i64 93956947311904, i64 93956947017016)
-  call void @res_int_logger(i64 %67, i64 93956947034240)
+  call void @res_int_logger(i64 %67, i64 147)
   br label %68
 
 68:                                               ; preds = %65, %61, %4
   %69 = phi i32 [ 1, %4 ], [ 0, %61 ], [ 1, %65 ]
-  call void @basic_block_start_logger(i64 93956946174064)
+  call void @basic_block_start_logger(i64 149)
   ret i32 %69
 }
 

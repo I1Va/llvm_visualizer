@@ -68,10 +68,6 @@ public:
     void apply_dynamic_info(const DynamicInfo &info) {
         for (auto [block_id, block_cnt] : info.bb_counts()) {
             auto it = clusters_.find(block_id);
-            if (it == clusters_.end()) {
-                std::cerr << "error : " << block_id << " : " << block_cnt << "\n";
-            }
-        
             assert(it != clusters_.end());
             Cluster *cluster = it->second.get();
             assert(cluster && cluster->type() == gb::ClusterTypes::BB);
