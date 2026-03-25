@@ -13,9 +13,14 @@ void Edge::print(std::ostream& stream, const size_t indent) const {
         return;
     }
 
+    std::string enhanced_label = label();
+    if (use_count_ > 0 && type() == gb::EdgeTypes::Call) {
+        enhanced_label += "\\n(" + std::to_string(use_count_) + ")";
+    }
+
     stream << indent_string << left_str << " -> "<< right_str;
     stream << "[";
-    stream << "label=\""      << label()                << "\" ";
+    stream << "label=\""      << enhanced_label          << "\" ";
     stream << "color=\""      << properties_.color      << "\" ";
     stream << "penwidth=\""   << properties_.penwidth   << "\" ";
     stream << "weight=\""     << properties_.weight     << "\" ";

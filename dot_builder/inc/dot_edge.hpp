@@ -30,7 +30,7 @@ static inline const EdgeProperties DEFAULT_DATAEDGE_PROPERTIES =
 
 static inline const EdgeProperties DEFAULT_FLOWEDGE_PROPERTIES = 
 {
-    .color = "#d62728",   
+    .color = "#000000",   
     .style = "solid",
     .arrowhead = "normal",
     .penwidth =2,

@@ -50,7 +50,6 @@ class Node {
 // dynamic info
     std::unordered_map<int64_t, uint64_t> call_values_;
 
-
 public:
     explicit Node(gb::INode *node, DotGraph *graph): underlying_(node), graph_(graph) {
         if (!node) throw std::invalid_argument("Cannot wrap a null INode.");
