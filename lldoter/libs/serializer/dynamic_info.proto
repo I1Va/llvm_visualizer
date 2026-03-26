@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package instrumentation;
+
+message CallEdge {
+  uint64 caller_id = 1;
+  uint64 callee_id = 2;
+}
+
+message Int64List {
+  repeated int64 values = 1;
+}
+
+message ExecutionData {
+  map<uint64, uint64> bb_counts = 1;
+
+  message EdgeEntry {
+    CallEdge edge = 1;
+    uint64 count = 2;
+  }
+  repeated EdgeEntry edge_counts = 2;
+
+  map<uint64, Int64List> call_values = 3;
+}
