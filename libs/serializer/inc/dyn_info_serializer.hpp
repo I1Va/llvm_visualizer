@@ -51,7 +51,7 @@ public:
         return 0;
     }
 
-    static DynamicInfo deserialize(const std::string& filepath) {
+    static void deserialize(DynamicInfo &info, const std::string& filepath) {
         instrumentation::ExecutionData proto_data;
         std::ifstream input(filepath, std::ios::binary);
         
@@ -62,8 +62,6 @@ public:
         if (!proto_data.ParseFromIstream(&input)) {
             throw std::runtime_error("Failed to parse dynamic info protobuf.");
         }
-
-        DynamicInfo info;
 
         for (auto const& [id, count] : proto_data.bb_counts()) {
             info.set_bb_count(id, count);
@@ -84,8 +82,6 @@ public:
             info.set_call_values(id, call_values);
 
         }
-
-        return info;
     }    
 };
 

@@ -75,7 +75,10 @@ public:
     
         for (auto [block_id, block_cnt] : info.bb_counts()) {
             auto it = clusters_.find(block_id);
-            assert(it != clusters_.end());
+            if (it == clusters_.end()) {
+                throw std::runtime_error("Can't find BB(" + std::to_string(block_id) + ") in static info");
+            }
+        
             Cluster *cluster = it->second.get();
             assert(cluster && cluster->type() == gb::ClusterTypes::BB);
             cluster->set_use_count(block_cnt);
@@ -90,7 +93,9 @@ public:
 
         for (auto &[call_id, call_values] : info.call_values()) {
             auto it = nodes_.find(call_id);
-            assert(it != nodes_.end());
+            if (it == nodes_.end()) {
+                throw std::runtime_error("Can't find node(" + std::to_string(call_id) + ") in static info");
+            }
             Node *node = it->second.get();
             assert(node && node->type() == gb::NodeTypes::Instr && node->label() == "call");
             for (int64_t value : call_values)
