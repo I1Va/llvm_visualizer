@@ -36,7 +36,7 @@ struct PairComparator {
     }
 };
 
-class MyModPass : public PassInfoMixin<MyModPass> {
+class SDAPass : public PassInfoMixin<SDAPass> {
     const std::string STATIC_INFO_PATH = "static_info.bin"; 
     const std::string DYNAMIC_INFO_PATH = "dynamic_info.bin";
  
@@ -345,12 +345,12 @@ private:
 PassPluginLibraryInfo getPassPluginInfo() {
     const auto callback = [](PassBuilder &PB) {
         PB.registerOptimizerLastEPCallback([](ModulePassManager &MPM, auto, auto) {
-            MPM.addPass(MyModPass{});
+            MPM.addPass(SDAPass{});
             return true;
-        });
+        });    
     };
 
-    return {LLVM_PLUGIN_API_VERSION, "MyPlugin", "0.0.1", callback};
+    return {LLVM_PLUGIN_API_VERSION, "SDA-LLVM-PASS", "0.0.1", callback};
 }
 
 extern "C" LLVM_ATTRIBUTE_WEAK PassPluginLibraryInfo llvmGetPassPluginInfo() {

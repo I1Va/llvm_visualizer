@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
-project(dot_builder)
+project(lldoter)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_subdirectory(./../libs/graph_builder ${CMAKE_CURRENT_BINARY_DIR}/graph_builder)
-add_subdirectory(./../libs/serializer    ${CMAKE_CURRENT_BINARY_DIR}/serializer)
-add_subdirectory(./../libs/dynamic_info  ${CMAKE_CURRENT_BINARY_DIR}/dynamic_info)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/graph_builder ${CMAKE_CURRENT_BINARY_DIR}/graph_builder)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/serializer    ${CMAKE_CURRENT_BINARY_DIR}/serializer)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/dynamic_info  ${CMAKE_CURRENT_BINARY_DIR}/dynamic_info)
 
 add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
