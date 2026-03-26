@@ -5,36 +5,29 @@
 #include <map>
 #include <concepts>
 
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/ModuleSlotTracker.h"
-#include "llvm/IR/Verifier.h"
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/ModuleSlotTracker.h>
+#include <llvm/IR/Verifier.h>
 
-#include "llvm/Passes/PassBuilder.h"
-#include "llvm/Passes/PassPlugin.h"
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/Passes/PassPlugin.h>
 
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/Error.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/raw_ostream.h"
+#include <llvm/Support/Casting.h>
+#include <llvm/Support/Error.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/FormatVariadic.h>
+#include <llvm/Support/raw_ostream.h>
 
-#include "llvm/Transforms/Utils/ModuleUtils.h"
+#include <llvm/Transforms/Utils/ModuleUtils.h>
 
 #include "graph_builder.hpp"
 #include "graph_serializer.hpp"
 #include "gb_llvm_types.hpp"
+#include "sda_utility.hpp"
+#include "sda_indexer.hpp"
 
 using namespace llvm;
-
-struct PairComparator {
-    bool operator()(const std::pair<Instruction *, Constant *> &lhs,
-                    const std::pair<Instruction *, Constant *> &rhs) const {
-        if (lhs.first != rhs.first)
-            return lhs.first < rhs.first;
-        return lhs.second < rhs.second;
-    }
-};
 
 class SDAPass : public PassInfoMixin<SDAPass> {
     const std::string STATIC_INFO_PATH = "static_info.bin"; 
@@ -45,15 +38,20 @@ class SDAPass : public PassInfoMixin<SDAPass> {
     Type *int32Ty=nullptr;
     Type *int64Ty=nullptr;
 
-    std::map<Value *, uint64_t> value_ids;
-    std::map<std::pair<Instruction *, Constant *>, uint64_t, PairComparator> constant_ids;
+    Indexer indexer_;
 
 public:
+    gb::IdT id(Function &value) const { return indexer_.id(value); }
+    gb::IdT id(BasicBlock &value) const { return indexer_.id(value); }
+    gb::IdT id(Instruction &value) const { return indexer_.id(value); }
+    gb::IdT constant_id(Instruction &anchor, Constant &constant) const 
+        { return indexer_.constant_id(anchor, constant); }
+
     PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM) {
         ModuleSlotTracker MST(&M);
         LLVMContext &Ctx = M.getContext();
         IRBuilder<> builder(Ctx);
-        init_ids_table(M);
+        indexer_.init_ids_table(M);
         gb::GraphBuilder graph_builder;
         
         voidTy = Type::getVoidTy(Ctx);
@@ -72,58 +70,6 @@ public:
     }
 
 private:
-    gb::IdT id(Function &value) const {
-        auto it = value_ids.find(&value);
-        assert(it != value_ids.end());
-        return it->second;
-    }
-    gb::IdT id(BasicBlock &value) const {
-        auto it = value_ids.find(&value);
-        assert(it != value_ids.end());
-        return it->second;
-    }
-    gb::IdT id(Instruction &value) const {
-        auto it = value_ids.find(&value);
-        assert(it != value_ids.end());
-        return it->second;
-    }
-
-    gb::IdT constant_id(Instruction &anchor, Constant &constant) const {
-        auto it = constant_ids.find({&anchor, &constant});
-        assert(it != constant_ids.end());
-        return it->second;
-    }
-
-    void init_ids_table(Module &M) {
-        value_ids.clear();
-        constant_ids.clear();
-        uint64_t value_id    = 0x0000000000000000;
-        uint64_t constant_id = 0x1000000000000000;
-
-        for (auto &F : M) {
-            value_ids[&F] = ++value_id;
-            for (auto &BB : F) {
-                value_ids[&BB] = ++value_id;
-                for (Instruction &I : BB) {
-                    Value *V = &I;
-                    if (value_ids.find(V) == value_ids.end())
-                        value_ids[V] = ++value_id;
-                    for (auto &Op : I.operands()) {
-                        if (Constant *constant = dyn_cast<Constant>(Op)) {
-                            std::pair<Instruction *, Constant *> key(&I, constant);
-                            if (constant_ids.find(key) == constant_ids.end())
-                                constant_ids[key] = ++constant_id;
-                            continue;
-                        } 
-                        llvm::Value *operand = Op.get();
-                        if (value_ids.find(operand) == value_ids.end())
-                            value_ids[operand] = ++value_id;
-                    }
-                }
-            }
-        }
-    }
-
     void perform_instrumentation(Module &M, IRBuilder<> &builder) {
          for (auto &F : M) {
             if (F.isDeclaration()) continue;
@@ -320,26 +266,6 @@ private:
             gb::IEdge *edge = graph_builder.create_edge<gb::EdgeTypes::Data>(*constant_node, *node); assert(edge);
         }
     }
-
-    std::string get_value_str(Value& value, ModuleSlotTracker& MST) {
-        std::string value_str;
-        raw_string_ostream value_str_stream(value_str);
-        value.printAsOperand(value_str_stream, false, MST);
-
-        std::string value_type_str;
-        raw_string_ostream value_type_str_stream(value_type_str);
-        value.getType()->print(value_type_str_stream); 
-
-        return value_type_str_stream.str() + " " + value_str;
-    }
-
-    std::string get_instr_str(Instruction& I) {
-        std::string str;
-        llvm::raw_string_ostream rso(str);
-        I.print(rso);
-        return rso.str();
-    }
-
 };
 
 PassPluginLibraryInfo getPassPluginInfo() {
