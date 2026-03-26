@@ -147,7 +147,12 @@ private:
             f_cl->label() = F.getName().str();
             for (auto &BB : F) {
                 auto* bb_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>(id(BB)); assert(bb_cl);
-                bb_cl->label() = BB.getName().str();
+                int bb_slot = MST.getLocalSlot(&BB);
+                if (BB.hasName()) {
+                    bb_cl->label() = BB.getName().str(); 
+                } else {
+                    bb_cl->label() = "%" + std::to_string(bb_slot);
+                }
                 bb_cl->set_parent(f_cl); 
                 for (auto& I : BB) build_instruction_control_edges(M, MST, *f_cl, *bb_cl, I, graph_builder);
             }
@@ -267,7 +272,6 @@ private:
                 gb::ICluster *func_cluster = 
                     graph_builder.create_cluster<gb::ClusterTypes::F>(id(*calledFunc)); assert(func_cluster);
                 func_cluster->label() = calledFunc->getName().str();
-
                 gb::IEdge *edge = graph_builder.create_edge<gb::EdgeTypes::Call>(*node, *func_cluster); assert(edge);
             }
         }
