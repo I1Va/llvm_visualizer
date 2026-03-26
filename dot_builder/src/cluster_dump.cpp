@@ -39,12 +39,18 @@ void Cluster::print_open(std::ostream &stream, const size_t indent) const {
     stream << indent_string << "  penwidth =\""  << properties_.penwidth     << "\"\n";
     stream << indent_string << "  fontcolor=\""  << properties_.fontcolor    << "\"\n";     
     stream << indent_string << "  fontsize=\""   << properties_.fontsize     << "\"\n";
-        
+    
+
+    for (const gb::INode *child : nodes()) {
+        std::cout << child->label() << " ";
+    }
+    std::cout << "\n";
+
     for (const gb::INode *child : nodes()) {
         if (child == *nodes().begin() && child->type() == gb::NodeTypes::Instr) {
             graph_->nodes()[child->id()]->print(stream, indent + 2, /*highlighted*/true);
             continue;
-        }   
+        } 
         graph_->nodes()[child->id()]->print(stream, indent + 2);
     }
 

@@ -33,7 +33,7 @@ public:
             if (cluster_ptr->parent()) {
                 p_cluster->set_parent_id(cluster_ptr->parent()->id());
             }
-
+            
             for (auto *node : cluster_ptr->nodes()) {
                 p_cluster->add_child_node_ids(node->id());
             }

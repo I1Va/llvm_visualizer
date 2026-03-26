@@ -21,6 +21,7 @@ public:
     std::string &label() override { return label_; }
 
     void set_parent(ICluster *parent) override { 
+        if (parent == parent_) return;
         if (parent_) parent_->remove_node(this);
         parent_ = parent; 
         if (parent) parent->nodes().push_back(this);

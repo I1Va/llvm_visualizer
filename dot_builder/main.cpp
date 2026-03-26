@@ -22,9 +22,14 @@ dot::DotGraph deserialize_dot_graph(gb::GraphBuilder &builder, const std::string
         throw std::runtime_error("Failed to parse protobuf data");
     }
 
+   
+
+    std::unordered_map<gb::IdT, const gb_ser::Node *> nodes;
     for (auto &pb_node : static_graph.nodes()) {
+        
         uint64_t node_type = pb_node.type(); 
         gb::IdT node_id = pb_node.id();
+        nodes[node_id] = &pb_node;
         gb::INode *node = nullptr;
         switch (node_type) {
             case gb::Instr: node = builder.create_node<gb::Instr>(node_id); break;
@@ -33,6 +38,19 @@ dot::DotGraph deserialize_dot_graph(gb::GraphBuilder &builder, const std::string
         }
         node->label() = pb_node.label();
     }
+
+    for (auto &pb_cluster : static_graph.clusters()) {
+        uint64_t cluster_type = pb_cluster.type();
+        gb::IdT cluster_id = pb_cluster.id();
+        gb::ICluster *cluster = nullptr;
+        switch (cluster_type) {
+            case gb::BB: cluster = builder.create_cluster<gb::BB>(cluster_id); break;
+            case gb::F:  cluster = builder.create_cluster<gb::F>(cluster_id);  break;
+            default: throw std::runtime_error("Got unknown cluster type: '" + std::to_string(cluster_type) + "' during serialization.");
+        }  
+        cluster->label() = pb_cluster.label();
+    }
+
     for (auto &pb_edge : static_graph.edges()) {
         uint64_t edge_type = pb_edge.type();
         std::pair<gb::IdT, gb::IdT> edge_id = {pb_edge.left_id(), pb_edge.right_id()};
@@ -45,17 +63,7 @@ dot::DotGraph deserialize_dot_graph(gb::GraphBuilder &builder, const std::string
         }
         edge->label() = pb_edge.label();
     }
-    for (auto &pb_cluster : static_graph.clusters()) {
-        uint64_t cluster_type = pb_cluster.type();
-        gb::IdT cluster_id = pb_cluster.id();
-        gb::ICluster *cluster = nullptr;
-        switch (cluster_type) {
-            case gb::BB: cluster = builder.create_cluster<gb::BB>(cluster_id); break;
-            case gb::F:  cluster = builder.create_cluster<gb::F>(cluster_id);  break;
-            default: throw std::runtime_error("Got unknown cluster type: '" + std::to_string(cluster_type) + "' during serialization.");
-        }  
-        cluster->label() = pb_cluster.label();
-    }
+
     
     for (auto &pb_cluster : static_graph.clusters()) {
         gb::IdT cluster_id = pb_cluster.id();

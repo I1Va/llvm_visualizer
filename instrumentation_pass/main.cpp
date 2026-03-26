@@ -136,7 +136,12 @@ private:
     }
 
     void gather_static_info(Module &M, ModuleSlotTracker &MST, gb::GraphBuilder &graph_builder) {
-         for (auto &F : M) {
+        build_control_flow(M, MST, graph_builder);
+        build_data_flow(M, MST, graph_builder);
+    }
+
+    void build_control_flow(Module &M, ModuleSlotTracker &MST, gb::GraphBuilder &graph_builder) {
+        for (auto &F : M) {
             MST.incorporateFunction(F);
             gb::ICluster* f_cl = graph_builder.create_cluster<gb::ClusterTypes::F>(id(F)); assert(f_cl);
             f_cl->label() = F.getName().str();
@@ -144,10 +149,18 @@ private:
                 auto* bb_cl = graph_builder.create_cluster<gb::ClusterTypes::BB>(id(BB)); assert(bb_cl);
                 bb_cl->label() = BB.getName().str();
                 bb_cl->set_parent(f_cl); 
-                for (auto& I : BB) {
-                    build_instruction_control_edges(M, MST, *f_cl, *bb_cl, I, graph_builder);
-                    build_instruction_data_edges(M, MST, *f_cl, *bb_cl, I, graph_builder);
-                }
+                for (auto& I : BB) build_instruction_control_edges(M, MST, *f_cl, *bb_cl, I, graph_builder);
+            }
+        }
+    }
+
+    void build_data_flow(Module &M, ModuleSlotTracker &MST, gb::GraphBuilder &graph_builder) {
+         for (auto &F : M) {
+            MST.incorporateFunction(F);
+            gb::ICluster* f_cl = graph_builder.get_cluster(id(F)); assert(f_cl);
+            for (auto &BB : F) {
+                auto* bb_cl = graph_builder.get_cluster(id(BB)); assert(bb_cl);
+                for (auto& I : BB) build_instruction_data_edges(M, MST, *f_cl, *bb_cl, I, graph_builder);
             }
         }
     }
@@ -238,24 +251,24 @@ private:
         gb::ICluster &Fcluster,
         gb::ICluster &BBcluster,
         Instruction &I,
-        gb::GraphBuilder &dot_builder
+        gb::GraphBuilder &graph_builder
     ) {
-        gb::INode *node = dot_builder.create_node<gb::NodeTypes::Instr>(id(I)); assert(node);
+        gb::INode *node = graph_builder.create_node<gb::NodeTypes::Instr>(id(I)); assert(node);
         node->set_parent(&BBcluster);
         node->label() = I.getOpcodeName(); 
     
         if (auto *prev_inst = I.getPrevNode()) {
-            gb::INode *prev_node = dot_builder.get_node(id(*prev_inst)); assert(prev_node);
-            gb::IEdge *edge = dot_builder.create_edge<gb::EdgeTypes::Flow>(*prev_node, *node); assert(edge);
+            gb::INode *prev_node = graph_builder.get_node(id(*prev_inst)); assert(prev_node);
+            gb::IEdge *edge = graph_builder.create_edge<gb::EdgeTypes::Flow>(*prev_node, *node); assert(edge);
         }
         
         if (CallBase *callInst = dyn_cast<CallBase>(&I)) {
             if (Function *calledFunc = callInst->getCalledFunction()) {
                 gb::ICluster *func_cluster = 
-                    dot_builder.create_cluster<gb::ClusterTypes::F>(id(*calledFunc)); assert(func_cluster);
+                    graph_builder.create_cluster<gb::ClusterTypes::F>(id(*calledFunc)); assert(func_cluster);
                 func_cluster->label() = calledFunc->getName().str();
 
-                gb::IEdge *edge = dot_builder.create_edge<gb::EdgeTypes::Call>(*node, *func_cluster); assert(edge);
+                gb::IEdge *edge = graph_builder.create_edge<gb::EdgeTypes::Call>(*node, *func_cluster); assert(edge);
             }
         }
         
@@ -263,12 +276,12 @@ private:
             BasicBlock* bb_operand = dyn_cast<BasicBlock>(U.get());
             if (bb_operand) {
                 gb::ICluster *bb_cluster = 
-                    dot_builder.create_cluster<gb::ClusterTypes::BB>(id(*bb_operand)); assert(bb_cluster);
+                    graph_builder.create_cluster<gb::ClusterTypes::BB>(id(*bb_operand)); assert(bb_cluster);
                 
                 bb_cluster->set_parent(&Fcluster);
                 bb_cluster->label() = bb_operand->getName().str();
                 
-                gb::IEdge *edge = dot_builder.create_edge<gb::EdgeTypes::Flow>(*node, *bb_cluster); assert(edge);
+                gb::IEdge *edge = graph_builder.create_edge<gb::EdgeTypes::Flow>(*node, *bb_cluster); assert(edge);
             }
         }
     }
@@ -280,25 +293,15 @@ private:
         gb::ICluster &Fcluster,
         gb::ICluster &BBcluster,
         Instruction &I,
-        gb::GraphBuilder &dot_builder
+        gb::GraphBuilder &graph_builder
     ) {
-        gb::INode *node = dot_builder.create_node<gb::NodeTypes::Instr>(id(I)); assert(node);
-        node->set_parent(&BBcluster);
-        node->label() = I.getOpcodeName();
-
+        gb::INode *node = graph_builder.get_node(id(I)); assert(node);
         for (auto &U : I.uses()) {
             if (Instruction* instr_user = dyn_cast<Instruction>(U.getUser())) {
                 BasicBlock *user_basic_block = instr_user->getParent(); assert(user_basic_block);
-                gb::ICluster* user_cluster = 
-                    dot_builder.create_cluster<gb::ClusterTypes::BB>(id(*user_basic_block)); assert(user_cluster);
-                user_cluster->set_parent(&Fcluster);
-                user_cluster->label() = user_basic_block->getName().str();
-                    
-                gb::INode *user_node = dot_builder.create_node<gb::NodeTypes::Instr>(id(*instr_user)); assert(user_node);
-                user_node->set_parent(user_cluster); 
-                user_node->label() = instr_user->getOpcodeName();
-                
-                gb::IEdge *edge = dot_builder.create_edge<gb::EdgeTypes::Data>(*node, *user_node); assert(edge);
+                gb::ICluster* user_cluster = graph_builder.get_cluster(id(*user_basic_block)); assert(user_cluster);
+                gb::INode *user_node = graph_builder.get_node(id(*instr_user)); assert(user_node);
+                gb::IEdge *edge = graph_builder.create_edge<gb::EdgeTypes::Data>(*node, *user_node); assert(edge);
             }
         }
 
@@ -306,11 +309,11 @@ private:
             Constant* value_op = dyn_cast<Constant>(U.get());
             if (!value_op) continue;
             gb::IdT node_id = constant_id(I, *value_op);
-            gb::INode* value_node = dot_builder.create_node<gb::NodeTypes::Constant>(node_id); assert(value_node);  
-            value_node->set_parent(&BBcluster); 
-            value_node->label() = get_value_str(*value_op, MST);
+            gb::INode* constant_node = graph_builder.create_node<gb::NodeTypes::Constant>(node_id); assert(constant_node);  
+            constant_node->set_parent(&BBcluster); 
+            constant_node->label() = get_value_str(*value_op, MST);
             
-            gb::IEdge *edge = dot_builder.create_edge<gb::EdgeTypes::Data>(*value_node, *node); assert(edge);
+            gb::IEdge *edge = graph_builder.create_edge<gb::EdgeTypes::Data>(*constant_node, *node); assert(edge);
         }
     }
 
