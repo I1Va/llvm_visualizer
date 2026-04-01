@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster_dump.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/node_dump.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/edge_dump.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dot_graph.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

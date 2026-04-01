@@ -7,6 +7,8 @@ file(MAKE_DIRECTORY "${PROTO_GEN_DIR}")
 add_library(${PROJECT_NAME} 
   ${CMAKE_CURRENT_SOURCE_DIR}/static_info.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_info.proto
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/dyn_info_serializer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/graph_serializer.cpp
   ${PROTO_SRCS}
 )
 

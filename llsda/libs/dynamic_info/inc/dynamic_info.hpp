@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <shared_mutex>
+#include <vector>
 
 struct PairHash {
     template <class T1, class T2>
